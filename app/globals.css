@@ -5,11 +5,20 @@
   --foreground: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+@theme {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* 🌿 WearWise Custom Theme */
+  --color-primary: #7FB77E;
+  --color-secondary: #CFE8CF;
+  --color-accent: #4CAF50;
+  --color-bg-soft: #F6FBF6;
+  --color-text-primary: #2F3E2F;
+  --color-text-secondary: #6B7C6B;
+  --color-reward: #A3C76D;
 }
 
 @media (prefers-color-scheme: dark) {
