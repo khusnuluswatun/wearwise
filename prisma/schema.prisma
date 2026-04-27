@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  phone         String?
+  address       String?
+  rewardPoints  Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  scans         Scan[]
+  items         Item[]
+  transactions  Transaction[]
+  rewards       Reward[]
+}
+
+model Scan {
+  id               String   @id @default(uuid())
+  userId           String
+  imageUrl         String
+  aiDescription    String?
+  aiRecommendation String?
+  userChoice       String?
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Partner {
+  id          String   @id @default(uuid())
+  type        String
+  name        String
+  description String?
+  address     String?
+  phone       String?
+
+  transactions Transaction[]
+}
+
+model Item {
+  id          String   @id @default(uuid())
+  userId      String
+  scanId      String
+  title       String
+  description String?
+  price       Int
+  status      String   @default("available")
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Transaction {
+  id              String   @id @default(uuid())
+  userId          String
+  partnerId       String?
+  itemId          String?
+  scanId          String?
+  type            String
+  status          String   @default("pending")
+  startDate       DateTime?
+  endDate         DateTime?
+  price           Int?
+  buyerConfirmed  Boolean  @default(false)
+  sellerConfirmed Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id])
+  partner Partner? @relation(fields: [partnerId], references: [id])
+}
+
+model Reward {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  points    Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}

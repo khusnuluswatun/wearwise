@@ -6,9 +6,9 @@
 }
 
 @theme {
-  --font-sans: "Inter", sans-serif;
+  --font-sans: "Poppins", sans-serif;
   --font-mono: var(--font-geist-mono);
-  --font-display: "Syne", sans-serif;
+  --font-display: "Poppins", sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
@@ -40,7 +40,7 @@ html {
 body {
   background: var(--color-bg);
   color: var(--color-text-primary);
-  font-family: "Inter", sans-serif;
+  font-family: "Poppins", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -69,7 +69,7 @@ body {
 
 /* ── Utility ── */
 .font-display {
-  font-family: "Syne", sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
 .gradient-text {
