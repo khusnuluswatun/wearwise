@@ -258,21 +258,21 @@ export default function Home() {
   }, []);
 
   return (
-    <div ref={pageRef} className="overflow-x-hidden bg-[#0a0a0a]">
+    <div ref={pageRef} className="overflow-x-hidden bg-[#f8fafc]">
       <Navbar />
 
       {/* ════════════════════════════════════════════
-          HERO  —  dark · orbital scanner · mouse parallax
+          HERO  —  light · orbital scanner · mouse parallax
       ════════════════════════════════════════════ */}
-      <section id="hero" className="relative min-h-screen bg-[#0a0a0a] overflow-hidden flex items-center">
+      <section id="hero" className="relative min-h-screen bg-gradient-to-br from-white via-[#f0fdf4] to-[#eff6ff] overflow-hidden flex items-center">
 
         {/* ── floating parallax background ── */}
         <div className="parallax-slow absolute inset-0 pointer-events-none select-none">
           {/* large color glow blobs */}
           <div className="scanner-glow-blob absolute top-0 right-0 w-[600px] h-[600px] rounded-full pointer-events-none"
-            style={{ background: `radial-gradient(circle, ${current.color}12 0%, transparent 70%)`, transform: "translate(30%,-30%)" }} />
+            style={{ background: `radial-gradient(circle, ${current.color}20 0%, transparent 70%)`, transform: "translate(30%,-30%)" }} />
           <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full pointer-events-none"
-            style={{ background: "radial-gradient(circle, rgba(92,222,113,0.07) 0%, transparent 70%)", transform: "translate(-30%,30%)" }} />
+            style={{ background: "radial-gradient(circle, rgba(59,130,246,0.10) 0%, transparent 70%)", transform: "translate(-30%,30%)" }} />
 
           {/* floating clothing items */}
           {[
@@ -305,13 +305,13 @@ export default function Home() {
 
           {/* ── LEFT COPY ── */}
           <div className="hero-copy-left">
-            <div className="hero-badge inline-flex items-center gap-2 bg-[#111] border border-[#1e1e1e] rounded-full px-4 py-2 text-xs font-semibold text-[#5CDE71] mb-8">
+            <div className="hero-badge inline-flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-full px-4 py-2 text-xs font-semibold text-[#22c55e] mb-8 shadow-sm">
               <span className="pulse-dot" />
               AI-Powered Wardrobe Intelligence
             </div>
 
             <div className="overflow-hidden mb-1">
-              <h1 className="hero-headline font-display font-extrabold text-[clamp(3rem,7vw,5.5rem)] leading-[1.0] text-white">
+              <h1 className="hero-headline font-display font-extrabold text-[clamp(3rem,7vw,5.5rem)] leading-[1.0] text-[#0f172a]">
                 One scan.
               </h1>
             </div>
@@ -326,24 +326,24 @@ export default function Home() {
               </h1>
             </div>
 
-            <p className="hero-sub text-gray-500 text-lg leading-relaxed max-w-md mb-8">
+            <p className="hero-sub text-slate-500 text-lg leading-relaxed max-w-md mb-8">
               Point your camera at any garment. Our AI reads the fabric, condition, and style — then tells you exactly whether to{" "}
-              <strong className="text-white">sell</strong>,{" "}
-              <strong className="text-white">donate</strong>,{" "}
-              <strong className="text-white">upcycle</strong>, or{" "}
-              <strong className="text-white">recycle</strong> it.
+              <strong className="text-[#0f172a]">sell</strong>,{" "}
+              <strong className="text-[#0f172a]">donate</strong>,{" "}
+              <strong className="text-[#0f172a]">upcycle</strong>, or{" "}
+              <strong className="text-[#0f172a]">recycle</strong> it.
             </p>
 
             <div className="hero-actions flex flex-wrap gap-3 mb-10">
               <a
                 href="/scan"
-                className="glow-btn inline-flex items-center gap-2 bg-[#5CDE71] text-black font-extrabold px-8 py-4 rounded-full text-base transition-all hover:scale-105"
+                className="glow-btn inline-flex items-center gap-2 bg-[#22c55e] text-white font-extrabold px-8 py-4 rounded-full text-base transition-all hover:scale-105 shadow-lg"
               >
                 Start Scanning →
               </a>
               <a
                 href="/register"
-                className="inline-flex items-center gap-2 border border-[#2a2a2a] text-gray-400 hover:text-white hover:border-[#444] font-semibold px-8 py-4 rounded-full text-base transition-all"
+                className="inline-flex items-center gap-2 border-2 border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-400 hover:bg-white font-semibold px-8 py-4 rounded-full text-base transition-all bg-white/60"
               >
                 Create Account
               </a>
@@ -356,10 +356,10 @@ export default function Home() {
                   key={cat.id}
                   className="hero-cat-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border-2 transition-all duration-300 hover:scale-105"
                   style={{
-                    background:   activeIdx === i ? cat.color    : "transparent",
-                    borderColor:  activeIdx === i ? cat.color    : "#2a2a2a",
-                    color:        activeIdx === i ? "#fff"        : "#666",
-                    boxShadow:    activeIdx === i ? `0 0 20px ${cat.color}44` : "none",
+                    background:   activeIdx === i ? cat.color    : "#ffffff",
+                    borderColor:  activeIdx === i ? cat.color    : "#e2e8f0",
+                    color:        activeIdx === i ? "#fff"        : "#64748b",
+                    boxShadow:    activeIdx === i ? `0 4px 20px ${cat.color}44` : "0 2px 8px rgba(0,0,0,0.06)",
                   }}
                   onClick={() => switchCategory(i)}
                 >
@@ -434,10 +434,10 @@ export default function Home() {
                   className="orbital-badge absolute flex items-center gap-1.5 font-bold text-xs px-3 py-2 rounded-full border-2 transition-all duration-300 hover:scale-110 whitespace-nowrap"
                   style={{
                     ...ORBITAL_POS[i],
-                    background:  activeIdx === i ? cat.color : "#111",
-                    borderColor: activeIdx === i ? cat.color : "#2a2a2a",
-                    color:       activeIdx === i ? "#fff"    : "#666",
-                    boxShadow:   activeIdx === i ? `0 0 20px ${cat.color}55` : "none",
+                    background:  activeIdx === i ? cat.color : "#ffffff",
+                    borderColor: activeIdx === i ? cat.color : "#e2e8f0",
+                    color:       activeIdx === i ? "#fff"    : "#64748b",
+                    boxShadow:   activeIdx === i ? `0 4px 20px ${cat.color}55` : "0 2px 12px rgba(0,0,0,0.08)",
                   }}
                   onClick={() => switchCategory(i)}
                 >
@@ -448,16 +448,16 @@ export default function Home() {
           </div>
         </div>
 
-        {/* bottom fade to dark */}
+        {/* bottom fade to light */}
         <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
-          style={{ background: "linear-gradient(transparent, #0a0a0a)" }} />
+          style={{ background: "linear-gradient(transparent, #f8fafc)" }} />
       </section>
 
       {/* ════════════════════════════════════════════
           MARQUEE
       ════════════════════════════════════════════ */}
-      <div className="border-y border-[#1a1a1a] py-4 overflow-hidden bg-[#080808]">
-        <div className="marquee-track text-[#444] text-xs font-bold uppercase tracking-widest">
+      <div className="border-y border-[#e2e8f0] py-4 overflow-hidden bg-white">
+        <div className="marquee-track text-[#94a3b8] text-xs font-bold uppercase tracking-widest">
           {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
             <span key={i} className="whitespace-nowrap pr-12">{item}</span>
           ))}
@@ -468,7 +468,7 @@ export default function Home() {
           PATHWAY  —  steps per category
           (pathway tabs update when hero orbs are clicked)
       ════════════════════════════════════════════ */}
-      <section id="pathway" className="py-24 px-6 bg-[#0a0a0a]">
+      <section id="pathway" className="py-24 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
           {/* header */}
           <div className="text-center mb-14">
@@ -476,10 +476,10 @@ export default function Home() {
               style={{ color: current.color }}>
               The {current.label} Pathway
             </span>
-            <h2 className="path-title-reveal font-display text-[clamp(2rem,5vw,3.2rem)] font-extrabold text-white mb-4">
+            <h2 className="path-title-reveal font-display text-[clamp(2rem,5vw,3.2rem)] font-extrabold text-[#0f172a] mb-4">
               Here's exactly how it works
             </h2>
-            <p className="path-title-reveal text-gray-500 max-w-xl mx-auto">
+            <p className="path-title-reveal text-slate-500 max-w-xl mx-auto">
               Simple, transparent steps from scan to completion — no guessing, no friction.
             </p>
           </div>
@@ -491,9 +491,10 @@ export default function Home() {
                 key={cat.id}
                 className="px-5 py-2.5 rounded-full text-sm font-semibold border-2 transition-all duration-200 hover:scale-105"
                 style={{
-                  background:  activeIdx === i ? cat.color : "transparent",
-                  borderColor: activeIdx === i ? cat.color : "#2a2a2a",
-                  color:       activeIdx === i ? "#fff"    : "#555",
+                  background:  activeIdx === i ? cat.color : "#ffffff",
+                  borderColor: activeIdx === i ? cat.color : "#e2e8f0",
+                  color:       activeIdx === i ? "#fff"    : "#64748b",
+                  boxShadow:   activeIdx === i ? `0 4px 16px ${cat.color}44` : "0 2px 8px rgba(0,0,0,0.06)",
                 }}
                 onClick={() => switchCategory(i)}
               >
@@ -511,10 +512,10 @@ export default function Home() {
                   key={`${current.id}-${i}`}
                   className="step-card relative rounded-3xl p-7 cursor-pointer"
                   style={{
-                    background:   i % 2 === 0 ? "#111" : `${current.color}15`,
-                    border:       `2px solid ${i % 2 === 0 ? "#1e1e1e" : current.color + "33"}`,
+                    background:   i % 2 === 0 ? "#ffffff" : `${current.color}10`,
+                    border:       `2px solid ${i % 2 === 0 ? "#e2e8f0" : current.color + "44"}`,
                     transform:    `rotate(${tilts[i]}deg)`,
-                    boxShadow:    `0 8px 32px rgba(0,0,0,0.4)`,
+                    boxShadow:    i % 2 === 0 ? "0 8px 32px rgba(15,23,42,0.08)" : `0 8px 32px ${current.color}22`,
                   }}
                 >
                   {/* step number */}
@@ -532,8 +533,8 @@ export default function Home() {
                     {step.icon}
                   </div>
 
-                  <h3 className="font-bold text-white text-lg mb-2">{step.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{step.desc}</p>
+                  <h3 className="font-bold text-[#0f172a] text-lg mb-2">{step.title}</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">{step.desc}</p>
 
                   {/* connector arrow */}
                   {i < 3 && (
@@ -562,40 +563,40 @@ export default function Home() {
       {/* ════════════════════════════════════════════
           FEATURES
       ════════════════════════════════════════════ */}
-      <section id="features" className="py-24 px-6 bg-[#0d0d0d]">
+      <section id="features" className="py-24 px-6 bg-[#f8fafc]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#5CDE71] mb-4">
+            <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#22c55e] mb-4">
               Why Scan First?
             </span>
-            <h2 className="font-display text-[clamp(2rem,5vw,3rem)] font-extrabold text-white mb-4">
+            <h2 className="font-display text-[clamp(2rem,5vw,3rem)] font-extrabold text-[#0f172a] mb-4">
               One scan. Infinite possibilities.
             </h2>
-            <p className="text-gray-500 max-w-xl mx-auto">
+            <p className="text-slate-500 max-w-xl mx-auto">
               Our AI doesn't just look at your clothes — it understands them. Then gives you the smartest path forward.
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: "🤖", title: "AI Recognition",      desc: "Fabric type, condition, style, and market value read in seconds.", color: "#5CDE71" },
-              { icon: "📋", title: "Smart Recommendations",desc: "Based on condition, AI picks the best option: sell, donate, upcycle, or recycle.", color: "#FF8C42" },
-              { icon: "📍", title: "Location-Aware",       desc: "Finds nearest donation centers, UMKM artisans, and recycling facilities.", color: "#4DAAFF" },
-              { icon: "💬", title: "In-App Chat",          desc: "Connect and negotiate with donation centers and UMKM right inside the app.", color: "#B06AFF" },
-              { icon: "📅", title: "Scheduling",           desc: "Agree on pick-up or delivery dates. Both parties get calendar reminders.", color: "#2DCB73" },
-              { icon: "🌱", title: "Impact Tracking",      desc: "Every action is tracked. See how much waste you've prevented over time.", color: "#FF6B9D" },
+              { icon: "🤖", title: "AI Recognition",      desc: "Fabric type, condition, style, and market value read in seconds.", color: "#22c55e" },
+              { icon: "📋", title: "Smart Recommendations",desc: "Based on condition, AI picks the best option: sell, donate, upcycle, or recycle.", color: "#f97316" },
+              { icon: "📍", title: "Location-Aware",       desc: "Finds nearest donation centers, UMKM artisans, and recycling facilities.", color: "#3b82f6" },
+              { icon: "💬", title: "In-App Chat",          desc: "Connect and negotiate with donation centers and UMKM right inside the app.", color: "#a855f7" },
+              { icon: "📅", title: "Scheduling",           desc: "Agree on pick-up or delivery dates. Both parties get calendar reminders.", color: "#06b6d4" },
+              { icon: "🌱", title: "Impact Tracking",      desc: "Every action is tracked. See how much waste you've prevented over time.", color: "#ec4899" },
             ].map((f, i) => (
               <div
                 key={i}
-                className="feature-tile bg-[#111] border border-[#1e1e1e] rounded-2xl p-7 cursor-default"
-                style={{ transform: `rotate(${[-1, 0.8, -0.5, 1, -0.8, 0.5][i]}deg)` }}
+                className="feature-tile bg-white border border-[#e2e8f0] rounded-2xl p-7 cursor-default"
+                style={{ transform: `rotate(${[-1, 0.8, -0.5, 1, -0.8, 0.5][i]}deg)`, boxShadow: "0 4px 24px rgba(15,23,42,0.07)" }}
               >
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4"
-                  style={{ background: `${f.color}18` }}>
+                  style={{ background: `${f.color}15` }}>
                   {f.icon}
                 </div>
-                <h3 className="font-bold text-white text-lg mb-2">{f.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
+                <h3 className="font-bold text-[#0f172a] text-lg mb-2">{f.title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -605,18 +606,18 @@ export default function Home() {
       {/* ════════════════════════════════════════════
           REWARD SYSTEM
       ════════════════════════════════════════════ */}
-      <section id="reward" className="py-24 px-6 bg-[#0a0a0a]">
+      <section id="reward" className="py-24 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div>
-              <span className="reward-text-reveal inline-block text-xs font-bold uppercase tracking-widest text-[#5CDE71] mb-4">
+              <span className="reward-text-reveal inline-block text-xs font-bold uppercase tracking-widest text-[#22c55e] mb-4">
                 The Reward System
               </span>
-              <h2 className="reward-text-reveal font-display text-[clamp(2rem,5vw,3rem)] font-extrabold text-white mb-4 leading-tight">
+              <h2 className="reward-text-reveal font-display text-[clamp(2rem,5vw,3rem)] font-extrabold text-[#0f172a] mb-4 leading-tight">
                 Do good,<br />
                 <span className="gradient-text">grow your pet. 🐣</span>
               </h2>
-              <p className="reward-text-reveal text-gray-500 leading-relaxed mb-8">
+              <p className="reward-text-reveal text-slate-500 leading-relaxed mb-8">
                 Every completed action earns reward points. Spend those points to unlock rewards and keep your virtual companion happy and growing.
               </p>
 
@@ -629,17 +630,17 @@ export default function Home() {
                 ].map((t, i) => (
                   <div
                     key={i}
-                    className="reward-tier flex items-center gap-4 bg-[#111] border border-[#1e1e1e] rounded-2xl px-6 py-4"
-                    style={{ transform: `rotate(${[-1, 0.6, -0.6, 1][i]}deg)` }}
+                    className="reward-tier flex items-center gap-4 bg-white border border-[#e2e8f0] rounded-2xl px-6 py-4"
+                    style={{ transform: `rotate(${[-1, 0.6, -0.6, 1][i]}deg)`, boxShadow: "0 4px 20px rgba(15,23,42,0.07)" }}
                   >
                     <span className="text-3xl">{t.icon}</span>
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
-                        <p className="font-bold text-white">{t.tier}</p>
+                        <p className="font-bold text-[#0f172a]">{t.tier}</p>
                         <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                          style={{ background: "#5CDE7122", color: "#5CDE71" }}>{t.pts}</span>
+                          style={{ background: "#22c55e22", color: "#16a34a" }}>{t.pts}</span>
                       </div>
-                      <p className="text-sm text-gray-500">{t.desc}</p>
+                      <p className="text-sm text-slate-500">{t.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -649,15 +650,15 @@ export default function Home() {
             <div className="flex items-center justify-center">
               <div className="reward-pet text-center">
                 <div className="w-64 h-64 rounded-full mx-auto flex items-center justify-center text-9xl select-none"
-                  style={{ background: "radial-gradient(circle, #5CDE7122 0%, transparent 70%)", animation: "petBob 2.5s ease-in-out infinite" }}>
+                  style={{ background: "radial-gradient(circle, #22c55e22 0%, transparent 70%)", animation: "petBob 2.5s ease-in-out infinite" }}>
                   🌿
                 </div>
-                <p className="font-display font-extrabold text-2xl text-white mt-6">Guardian</p>
-                <p className="text-gray-500 text-sm mt-1">Your eco-companion, level 4</p>
-                <div className="mt-4 bg-[#111] border border-[#1e1e1e] rounded-full h-3 overflow-hidden mx-8">
-                  <div className="h-full rounded-full" style={{ width: "72%", background: "#5CDE71" }} />
+                <p className="font-display font-extrabold text-2xl text-[#0f172a] mt-6">Guardian</p>
+                <p className="text-slate-500 text-sm mt-1">Your eco-companion, level 4</p>
+                <div className="mt-4 bg-slate-100 border border-slate-200 rounded-full h-3 overflow-hidden mx-8">
+                  <div className="h-full rounded-full" style={{ width: "72%", background: "linear-gradient(90deg, #22c55e, #16a34a)" }} />
                 </div>
-                <p className="text-xs text-gray-600 mt-2">720 / 1000 pts to next level</p>
+                <p className="text-xs text-slate-400 mt-2">720 / 1000 pts to next level</p>
               </div>
             </div>
           </div>
@@ -669,33 +670,33 @@ export default function Home() {
       {/* ════════════════════════════════════════════
           HOW TO GET STARTED
       ════════════════════════════════════════════ */}
-      <section className="py-24 px-6 bg-[#0d0d0d]">
+      <section className="py-24 px-6 bg-[#f8fafc]">
         <div className="max-w-4xl mx-auto text-center">
-          <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#5CDE71] mb-4">
+          <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#22c55e] mb-4">
             How to Get Started
           </span>
-          <h2 className="font-display text-[clamp(2rem,5vw,3rem)] font-extrabold text-white mb-4">
+          <h2 className="font-display text-[clamp(2rem,5vw,3rem)] font-extrabold text-[#0f172a] mb-4">
             Three steps, infinite impact
           </h2>
-          <p className="text-gray-500 mb-14 max-w-xl mx-auto">Your onboarding journey, simplified.</p>
+          <p className="text-slate-500 mb-14 max-w-xl mx-auto">Your onboarding journey, simplified.</p>
 
           <div className="onboard-steps relative flex flex-col md:flex-row gap-8 items-start justify-center">
-            <div className="hidden md:block absolute top-14 left-[16.5%] right-[16.5%] h-px"
-              style={{ background: "linear-gradient(90deg, #5CDE71, #4DAAFF, #B06AFF)" }} />
+            <div className="hidden md:block absolute top-14 left-[16.5%] right-[16.5%] h-0.5 rounded-full"
+              style={{ background: "linear-gradient(90deg, #22c55e, #3b82f6, #a855f7)" }} />
             {[
-              { n:"1", icon:"🌱", title:"Create Account",    desc:"Sign up in under a minute. Set your profile, location, and preferences.", color:"#5CDE71" },
-              { n:"2", icon:"📸", title:"Scan a Garment",    desc:"Take a photo of any clothing item. AI does the rest.", color:"#4DAAFF" },
-              { n:"3", icon:"🎯", title:"Choose Your Path",  desc:"Pick Sell, Donate, Upcycle, or Recycle. Complete and earn rewards.", color:"#B06AFF" },
+              { n:"1", icon:"🌱", title:"Create Account",    desc:"Sign up in under a minute. Set your profile, location, and preferences.", color:"#22c55e" },
+              { n:"2", icon:"📸", title:"Scan a Garment",    desc:"Take a photo of any clothing item. AI does the rest.", color:"#3b82f6" },
+              { n:"3", icon:"🎯", title:"Choose Your Path",  desc:"Pick Sell, Donate, Upcycle, or Recycle. Complete and earn rewards.", color:"#a855f7" },
             ].map((s, i) => (
               <div key={i} className="onboard-step flex flex-col items-center text-center flex-1">
                 <div className="w-28 h-28 rounded-3xl flex items-center justify-center text-5xl mb-4 border-2"
-                  style={{ background:`${s.color}12`, borderColor:s.color, transform:`rotate(${[-3,0,3][i]}deg)` }}>
+                  style={{ background:`${s.color}12`, borderColor:s.color, transform:`rotate(${[-3,0,3][i]}deg)`, boxShadow:`0 8px 32px ${s.color}22` }}>
                   {s.icon}
                 </div>
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white mb-3 -mt-2"
                   style={{ background:s.color }}>{s.n}</div>
-                <h3 className="font-bold text-white text-lg mb-2">{s.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed max-w-xs">{s.desc}</p>
+                <h3 className="font-bold text-[#0f172a] text-lg mb-2">{s.title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed max-w-xs">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -705,19 +706,19 @@ export default function Home() {
       {/* ════════════════════════════════════════════
           STATS
       ════════════════════════════════════════════ */}
-      <section id="stats" className="py-20 px-6 border-y border-[#1a1a1a] bg-[#0a0a0a]">
+      <section id="stats" className="py-20 px-6 border-y border-[#e2e8f0] bg-white">
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { n:"10K+", label:"Clothes Saved",  icon:"👗", color:"#5CDE71" },
-            { n:"4",    label:"Action Paths",   icon:"🛤️", color:"#FF8C42" },
-            { n:"98%",  label:"Happy Users",    icon:"😊", color:"#4DAAFF" },
-            { n:"0",    label:"Waste Target",   icon:"🌍", color:"#B06AFF" },
+            { n:"10K+", label:"Clothes Saved",  icon:"👗", color:"#22c55e" },
+            { n:"4",    label:"Action Paths",   icon:"🛤️", color:"#f97316" },
+            { n:"98%",  label:"Happy Users",    icon:"😊", color:"#3b82f6" },
+            { n:"0",    label:"Waste Target",   icon:"🌍", color:"#a855f7" },
           ].map((s, i) => (
-            <div key={i} className="stat-box bg-[#111] border border-[#1e1e1e] rounded-2xl p-6 text-center"
-              style={{ transform:`rotate(${[-1.5,1,-0.8,1.5][i]}deg)` }}>
+            <div key={i} className="stat-box bg-white border border-[#e2e8f0] rounded-2xl p-6 text-center"
+              style={{ transform:`rotate(${[-1.5,1,-0.8,1.5][i]}deg)`, boxShadow:"0 4px 24px rgba(15,23,42,0.07)" }}>
               <div className="text-3xl mb-2">{s.icon}</div>
               <p className="font-display text-[clamp(2rem,5vw,3rem)] font-extrabold mb-1" style={{ color:s.color }}>{s.n}</p>
-              <p className="text-gray-500 text-xs font-medium uppercase tracking-wide">{s.label}</p>
+              <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">{s.label}</p>
             </div>
           ))}
         </div>
@@ -726,27 +727,27 @@ export default function Home() {
       {/* ════════════════════════════════════════════
           CTA
       ════════════════════════════════════════════ */}
-      <section id="cta" className="py-28 px-6 bg-[#0a0a0a]">
+      <section id="cta" className="py-28 px-6 bg-[#f8fafc]">
         <div className="cta-card max-w-2xl mx-auto text-center rounded-[2.5rem] p-14 relative overflow-hidden"
-          style={{ background:"linear-gradient(135deg,#111 0%,#161616 100%)", border:"1px solid #222" }}>
+          style={{ background:"linear-gradient(135deg, #ffffff 0%, #f0fdf4 50%, #eff6ff 100%)", border:"1.5px solid #e2e8f0", boxShadow:"0 24px 80px rgba(34,197,94,0.12), 0 8px 32px rgba(15,23,42,0.08)" }}>
           <div className="absolute top-0 left-1/4 w-48 h-48 rounded-full pointer-events-none"
-            style={{ background:"radial-gradient(circle, rgba(92,222,113,0.08) 0%, transparent 70%)", transform:"translateY(-50%)" }} />
+            style={{ background:"radial-gradient(circle, rgba(34,197,94,0.12) 0%, transparent 70%)", transform:"translateY(-50%)" }} />
           <div className="absolute bottom-0 right-1/4 w-48 h-48 rounded-full pointer-events-none"
-            style={{ background:"radial-gradient(circle, rgba(77,170,255,0.08) 0%, transparent 70%)", transform:"translateY(50%)" }} />
-          <span className="relative inline-block text-xs font-bold uppercase tracking-widest text-[#5CDE71] mb-6">
+            style={{ background:"radial-gradient(circle, rgba(59,130,246,0.10) 0%, transparent 70%)", transform:"translateY(50%)" }} />
+          <span className="relative inline-block text-xs font-bold uppercase tracking-widest text-[#22c55e] mb-6">
             Your Wardrobe Awaits
           </span>
-          <h2 className="relative font-display text-[clamp(2rem,5vw,3rem)] font-extrabold text-white mb-4 leading-tight">
+          <h2 className="relative font-display text-[clamp(2rem,5vw,3rem)] font-extrabold text-[#0f172a] mb-4 leading-tight">
             Start with one piece.<br />Change everything. 🌱
           </h2>
-          <p className="relative text-gray-500 mb-10 leading-relaxed">
+          <p className="relative text-slate-500 mb-10 leading-relaxed">
             Join thousands of people making smarter, more sustainable decisions for their wardrobe.
           </p>
           <div className="relative flex flex-wrap gap-4 justify-center">
-            <a href="/scan" className="glow-btn inline-flex items-center gap-2 bg-[#5CDE71] text-black font-bold px-8 py-4 rounded-full text-base">
+            <a href="/scan" className="glow-btn inline-flex items-center gap-2 bg-[#22c55e] text-white font-bold px-8 py-4 rounded-full text-base shadow-lg">
               Scan Your Clothes Now →
             </a>
-            <a href="/register" className="inline-flex items-center gap-2 border border-[#333] text-gray-400 hover:text-white hover:border-white font-semibold px-8 py-4 rounded-full text-base transition-all">
+            <a href="/register" className="inline-flex items-center gap-2 border-2 border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-400 hover:bg-white font-semibold px-8 py-4 rounded-full text-base transition-all bg-white/80">
               Create Account
             </a>
           </div>
@@ -756,14 +757,14 @@ export default function Home() {
       {/* ════════════════════════════════════════════
           FOOTER
       ════════════════════════════════════════════ */}
-      <footer className="border-t border-[#1a1a1a] py-10 px-6 bg-[#0a0a0a]">
+      <footer className="border-t border-[#e2e8f0] py-10 px-6 bg-white">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="font-display font-extrabold text-xl text-white">WearWise <span style={{ color:"#5CDE71" }}>🌱</span></p>
-          <p className="text-gray-600 text-xs">© {new Date().getFullYear()} WearWise. All rights reserved.</p>
-          <div className="flex gap-6 text-xs text-gray-600">
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms</a>
-            <a href="#" className="hover:text-white transition-colors">Contact</a>
+          <p className="font-display font-extrabold text-xl text-[#0f172a]">WearWise <span style={{ color:"#22c55e" }}>🌱</span></p>
+          <p className="text-slate-400 text-xs">© {new Date().getFullYear()} WearWise. All rights reserved.</p>
+          <div className="flex gap-6 text-xs text-slate-400">
+            <a href="#" className="hover:text-[#22c55e] transition-colors">Privacy</a>
+            <a href="#" className="hover:text-[#22c55e] transition-colors">Terms</a>
+            <a href="#" className="hover:text-[#22c55e] transition-colors">Contact</a>
           </div>
         </div>
       </footer>
