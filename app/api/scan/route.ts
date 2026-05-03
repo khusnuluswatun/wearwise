@@ -39,7 +39,7 @@ If it DOES contain clothing, respond ONLY with a valid JSON object (no markdown,
   "recommendationEmoji": "🏷️ | 🤝 | ✂️ | ♻️",
   "recommendationColor": "#FF8C42 | #4DAAFF | #B06AFF | #2DCB73",
   "reasoning": "2-3 sentence explanation of why this recommendation is best",
-  "sellPrice": "estimated resale price range in IDR (e.g. Rp 50.000 - 150.000) or null if not applicable",
+  "sellPrice": "Single maximum estimated resale price formatted as IDR string (e.g. 'Rp 150.000') or null if not applicable. DO NOT USE A RANGE.",
   "tags": ["tag1", "tag2", "tag3"],
   "tips": "one specific actionable tip for the recommended action"
 }
@@ -50,12 +50,11 @@ Rules:
 - Donate if score 40-69 or item is functional but not trendy
 - Upcycle if score 30-60 and item has interesting material/shape
 - Recycle if score < 35 or item is too damaged
-- Be specific about the item, not generic
 - PRICING RULE: 
-  1. If there is NO indication that the item is "never been used", "with tag", or "brand new", you MUST set the sellPrice strictly UNDER Rp 50.000 (e.g. "Rp 15.000 - 35.000"), regardless of brand.
+  1. If there is NO indication that the item is "never been used", "with tag", or "brand new", you MUST set the sellPrice strictly UNDER Rp 50.000 (e.g. "Rp 35.000"), regardless of brand.
   2. IF the item IS clearly "never been used" or "brand new":
-     - For UNBRANDED items, set sellPrice between Rp 80.000 - Rp 150.000.
-     - For BRANDED items, estimate the original retail price and reduce it just a little bit. Give the final estimated sellPrice range in IDR.`;
+     - For UNBRANDED items, set sellPrice to exactly "Rp 150.000".
+     - For BRANDED items, estimate the original retail price and reduce it just a little bit. Give the final maximum estimated sellPrice in IDR string.`;
 
     const result = await model.generateContent([
       { text: prompt },
@@ -76,7 +75,7 @@ Rules:
 
     if (data.error === "not_clothing") {
       return NextResponse.json(
-        { error: "Gambar yang dideteksi bukan pakaian. Harap unggah foto pakaian sungguhan." },
+        { error: "The image detected is not clothing. Please upload a real clothing photo." },
         { status: 400 }
       );
     }

@@ -68,7 +68,8 @@ export default function Login() {
       }
 
       // Handle successful login (e.g., set cookie, redirect)
-      window.location.href = "/";
+      localStorage.setItem("user", JSON.stringify(data.user));
+      window.location.href = "/dashboard";
     } catch (err: any) {
       setError(err.message);
     } finally {
