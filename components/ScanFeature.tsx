@@ -206,7 +206,7 @@ export default function ScanFeature() {
         if (scanAnother) {
           reset();
         } else {
-          window.location.href = "/dashboard/sell/new";
+          window.location.href = "/dashboard/my-market/new";
         }
       };
     } else {

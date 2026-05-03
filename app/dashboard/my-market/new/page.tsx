@@ -125,7 +125,7 @@ export default function SellNewPage() {
 
       // Clear draft and redirect
       localStorage.removeItem("wearwise_sell_draft_list");
-      router.push("/dashboard/sell");
+      router.push("/dashboard/my-market");
 
     } catch (err: any) {
       setError(err.message);

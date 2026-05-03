@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
   ScanLine, 
-  Tag, 
-  ShoppingBag, 
+  ShoppingBag,
+  Store,
   LogOut, 
   Leaf,
   Menu,
@@ -33,8 +33,8 @@ export default function DashboardLayout({
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Scan", href: "/dashboard/scan", icon: ScanLine },
-    { name: "Sell", href: "/dashboard/sell", icon: Tag },
-    { name: "Buy", href: "/dashboard/buy", icon: ShoppingBag },
+    { name: "Market", href: "/dashboard/market", icon: ShoppingBag },
+    { name: "My Market", href: "/dashboard/my-market", icon: Store },
   ];
 
   const handleLogout = () => {
@@ -117,8 +117,8 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main Content */}
-      <main className={`flex-1 lg:ml-72 transition-all duration-300`}>
-        <div className="p-4 md:p-8 lg:p-10 max-w-[1600px] mx-auto">
+      <main className={`flex-1 lg:ml-72 transition-all duration-300 flex flex-col min-h-screen`}>
+        <div className="p-4 md:p-8 lg:p-10 max-w-[1600px] mx-auto w-full flex-1">
           {children}
         </div>
       </main>
