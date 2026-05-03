@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { gsap } from "gsap";
 import Navbar from "@/components/ui/Navbar";
 
 /* ─── Types ─────────────────────────────────────── */
@@ -38,8 +39,47 @@ export default function ScanPage() {
   const inputRef  = useRef<HTMLInputElement>(null);
   const videoRef  = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  /* ─── file pick ─── */
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.from(".scan-header > *", {
+        y: 30,
+        opacity: 0,
+        stagger: 0.1,
+        duration: 0.8,
+        ease: "power3.out"
+      });
+      gsap.from(".upload-card", {
+        y: 40,
+        opacity: 0,
+        duration: 1,
+        ease: "power4.out",
+        delay: 0.3
+      });
+    }, containerRef);
+    return () => ctx.revert();
+  }, []);
+  useEffect(() => {
+    if (result) {
+      gsap.from(".result-stagger", {
+        y: 30,
+        opacity: 0,
+        stagger: 0.1,
+        duration: 0.8,
+        ease: "back.out(1.4)",
+        delay: 0.1
+      });
+      gsap.from(".condition-bar", {
+        scaleX: 0,
+        transformOrigin: "left",
+        duration: 1.5,
+        ease: "power4.out",
+        delay: 0.5
+      });
+    }
+  }, [result]);
+
   const handleFile = useCallback((f: File) => {
     setFile(f);
     setResult(null);
@@ -124,13 +164,13 @@ export default function ScanPage() {
 
   /* ─── render ─── */
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
+    <div ref={containerRef} className="min-h-screen bg-[#f8fafc]">
       <Navbar />
 
       <main className="max-w-4xl mx-auto px-4 pt-28 pb-20">
 
         {/* ── Header ── */}
-        <div className="text-center mb-10">
+        <div className="scan-header text-center mb-10">
           <span className="inline-flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-full px-4 py-2 text-xs font-semibold text-[#22c55e] mb-5 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
             WearWise AI Scanner
@@ -177,7 +217,7 @@ export default function ScanPage() {
 
         {/* ── Upload area ── */}
         {!result && (
-          <div className="bg-white rounded-3xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+          <div className="upload-card bg-white rounded-3xl border border-[#e2e8f0] shadow-sm overflow-hidden">
 
             {/* Drop zone */}
             <div
@@ -329,11 +369,11 @@ export default function ScanPage() {
             RESULT CARD
         ══════════════════════════════════════ */}
         {result && (
-          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-5">
 
             {/* ── Hero result ── */}
             <div
-              className={`bg-gradient-to-br ${REC_BG[result.recommendation]} rounded-3xl border border-[#e2e8f0] overflow-hidden shadow-sm`}
+              className={`result-stagger bg-gradient-to-br ${REC_BG[result.recommendation]} rounded-3xl border border-[#e2e8f0] overflow-hidden shadow-sm`}
             >
               <div className="grid md:grid-cols-2 gap-0">
 
@@ -373,7 +413,7 @@ export default function ScanPage() {
                     </div>
                     <div className="h-2.5 bg-white/70 rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full transition-all duration-1000"
+                        className="condition-bar h-full rounded-full transition-all duration-1000"
                         style={{
                           width: `${result.conditionScore}%`,
                           background: `linear-gradient(90deg, ${result.recommendationColor}, ${result.recommendationColor}bb)`,
@@ -410,7 +450,7 @@ export default function ScanPage() {
             </div>
 
             {/* ── Detail cards row ── */}
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="result-stagger grid sm:grid-cols-2 gap-4">
 
               {/* Reasoning */}
               <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm">
@@ -439,7 +479,7 @@ export default function ScanPage() {
             </div>
 
             {/* ── Action paths ── */}
-            <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm">
+            <div className="result-stagger bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Pilihan Lain</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[

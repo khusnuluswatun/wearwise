@@ -17,7 +17,11 @@ export default function Navbar() {
 
   /* entrance */
   useEffect(() => {
-    gsap.from(navRef.current, { y: -60, opacity: 0, duration: 0.8, ease: "power3.out" });
+    gsap.fromTo(
+      navRef.current,
+      { y: -60, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" }
+    );
   }, []);
 
   return (
@@ -69,20 +73,14 @@ export default function Navbar() {
 
           {/* cta */}
           <div className="hidden md:flex items-center gap-4">
+            <a href="/login" className="text-sm font-semibold text-slate-600 hover:text-slate-900 px-4 py-2">
+              Login
+            </a>
             <a
-              href="/scan"
-              className="inline-flex items-center gap-2 bg-[#22c55e] text-white font-semibold text-sm px-5 py-2.5 rounded-full transition-all hover:opacity-90 hover:shadow-lg"
-              style={{ boxShadow: "0 0 0 0 rgba(34,197,94,0)" }}
-              onMouseEnter={(e) =>
-                ((e.target as HTMLAnchorElement).style.boxShadow =
-                  "0 4px 20px rgba(34,197,94,0.4)")
-              }
-              onMouseLeave={(e) =>
-                ((e.target as HTMLAnchorElement).style.boxShadow =
-                  "0 0 0 0 rgba(34,197,94,0)")
-              }
+              href="/register"
+              className="inline-flex items-center gap-2 bg-[#22c55e] text-white font-semibold text-sm px-6 py-2.5 rounded-full transition-all hover:opacity-90 hover:shadow-lg shadow-green-500/20"
             >
-              Start Scanning
+              Get Started
             </a>
           </div>
 
@@ -134,11 +132,18 @@ export default function Navbar() {
             </a>
           ))}
           <a
-            href="/scan"
+            href="/register"
             onClick={() => setMenuOpen(false)}
-            className="mt-4 bg-[#22c55e] text-white font-semibold px-8 py-4 rounded-full text-lg shadow-lg"
+            className="mt-4 bg-[#22c55e] text-white font-semibold px-8 py-4 rounded-full text-lg shadow-lg shadow-green-500/20"
           >
-            Start Scanning 🌱
+            Get Started 🌱
+          </a>
+          <a
+            href="/login"
+            onClick={() => setMenuOpen(false)}
+            className="text-lg font-bold text-slate-500 hover:text-slate-900"
+          >
+            Login
           </a>
         </div>
       </div>
