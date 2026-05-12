@@ -11,7 +11,8 @@ import {
   LogOut, 
   Leaf,
   Menu,
-  X
+  X,
+  Scissors
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -24,21 +25,30 @@ export default function DashboardLayout({
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const userStr = localStorage.getItem("user");
+    // Check both 'user' and 'partner_user' for backward compatibility during transition
+    const userStr = localStorage.getItem("user") || localStorage.getItem("partner_user");
     if (userStr) {
       setUser(JSON.parse(userStr));
     }
   }, []);
 
-  const navItems = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Scan", href: "/dashboard/scan", icon: ScanLine },
-    { name: "Sell", href: "/dashboard/sell", icon: Tag },
-    { name: "Buy", href: "/dashboard/buy", icon: ShoppingBag },
-  ];
+  const isPartner = user?.role === "partner";
+
+  const navItems = isPartner 
+    ? [
+        { name: "Dashboard", href: "/partner/dashboard", icon: LayoutDashboard },
+        { name: "Donasi Masuk", href: "/partner/dashboard/donations", icon: Leaf },
+      ]
+    : [
+        { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { name: "Scan", href: "/dashboard/scan", icon: ScanLine },
+        { name: "Sell", href: "/dashboard/sell", icon: Tag },
+        { name: "Buy", href: "/dashboard/buy", icon: ShoppingBag },
+      ];
 
   const handleLogout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("partner_user");
     window.location.href = "/login";
   };
 
@@ -60,7 +70,7 @@ export default function DashboardLayout({
       >
         {/* Logo */}
         <div className="h-24 flex items-center px-8 border-b border-slate-100/50">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href={isPartner ? "/partner/dashboard" : "/dashboard"} className="flex items-center gap-2">
             <div className="bg-gradient-to-br from-green-400 to-green-600 text-white p-2.5 rounded-xl shadow-lg shadow-green-500/30">
               <Leaf size={24} strokeWidth={2.5} />
             </div>
@@ -101,8 +111,10 @@ export default function DashboardLayout({
                 {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-slate-800 leading-tight">{user?.name || "User"}</span>
-                <span className="text-xs font-medium text-slate-500">Free Account</span>
+                <span className="text-sm font-bold text-slate-800 leading-tight truncate max-w-[100px]">{user?.name || "User"}</span>
+                <span className={`text-[10px] font-bold uppercase tracking-wider ${isPartner ? "text-blue-500" : "text-green-600"}`}>
+                  {isPartner ? "Partner" : "Member"}
+                </span>
               </div>
             </div>
             <button 

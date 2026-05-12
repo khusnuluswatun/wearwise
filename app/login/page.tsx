@@ -14,6 +14,8 @@ export default function Login() {
   });
   const [error, setError] = useState("");
 
+
+
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
@@ -67,9 +69,14 @@ export default function Login() {
         throw new Error(data.error || "Login failed");
       }
 
-      // Handle successful login (e.g., set cookie, redirect)
+      // Handle successful login
       localStorage.setItem("user", JSON.stringify(data.user));
-      window.location.href = "/dashboard";
+      
+      if (data.user.role === "partner") {
+        window.location.href = "/partner/dashboard";
+      } else {
+        window.location.href = "/dashboard";
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {

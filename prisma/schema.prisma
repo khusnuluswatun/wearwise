@@ -45,6 +45,8 @@ model Partner {
   description String?
   address     String?
   phone       String?
+  latitude    Float?
+  longitude   Float?
 
   transactions Transaction[]
 }
@@ -69,11 +71,16 @@ model Transaction {
   scanId          String?
   type            String
   status          String   @default("pending")
+  deliveryMethod  String?  // "drop_off" or "pickup"
+  pickupAddress   String?
+  pickupTime      String?
   startDate       DateTime?
   endDate         DateTime?
   price           Int?
   buyerConfirmed  Boolean  @default(false)
   sellerConfirmed Boolean  @default(false)
+  paymentMethod   String?
+  notes           String?
   createdAt       DateTime @default(now())
 
   user    User     @relation(fields: [userId], references: [id])

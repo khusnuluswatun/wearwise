@@ -5,10 +5,11 @@ import { Plus, Tag, MapPin, Star } from "lucide-react";
 // For demo purposes, we will fetch all items. In a real app, this might be filtered or paginated.
 export default async function SellMarketPage() {
   const items = await prisma.item.findMany({
+    where: {
+      status: "available"
+    },
     include: {
       user: true,
-      // We need the scan to get the image
-      // Wait, relation is Item -> User. Item has scanId but no relation defined to Scan in schema?
     }
   });
 

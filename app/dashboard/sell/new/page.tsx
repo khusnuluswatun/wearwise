@@ -105,6 +105,7 @@ export default function SellNewPage() {
         
         const payload = new FormData();
         payload.append("userId", user?.id || "dummy-user-id");
+        payload.append("scanId", itemData.id); // This is the scanId from localStorage
         payload.append("title", itemData.title);
         payload.append("description", itemData.description);
         payload.append("price", itemData.price);

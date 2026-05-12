@@ -56,15 +56,36 @@ Rules:
      - For UNBRANDED items, set sellPrice to exactly "Rp 150.000".
      - For BRANDED items, estimate the original retail price and reduce it just a little bit. Give the final maximum estimated sellPrice in IDR string.`;
 
-    const result = await model.generateContent([
-      { text: prompt },
-      {
-        inlineData: {
-          mimeType,
-          data: base64,
-        },
-      },
-    ]);
+    // Retry logic for robust API calls
+    let result;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+      try {
+        attempts++;
+        result = await model.generateContent([
+          { text: prompt },
+          {
+            inlineData: {
+              mimeType,
+              data: base64,
+            },
+          },
+        ]);
+        break; // Success!
+      } catch (err: any) {
+        const isRetryable = err.message?.includes("503") || err.message?.includes("Service Unavailable") || err.message?.includes("overloaded");
+        if (isRetryable && attempts < maxAttempts) {
+          console.log(`Gemini busy (attempt ${attempts}), retrying in ${attempts * 1000}ms...`);
+          await new Promise(resolve => setTimeout(resolve, attempts * 1000));
+          continue;
+        }
+        throw err; // Not retryable or max attempts reached
+      }
+    }
+
+    if (!result) throw new Error("Failed to get response from AI after retries");
 
     const text = result.response.text().trim();
 
@@ -81,16 +102,26 @@ Rules:
     }
 
     return NextResponse.json({ success: true, data });
-  } catch (err) {
-    console.error("Scan API error:", err);
+  } catch (err: any) {
+    console.error("Scan API error detail:", JSON.stringify(err, null, 2));
+    console.error("Scan API error message:", err.message);
 
-    if (err instanceof SyntaxError) {
-      return NextResponse.json({ error: "AI returned invalid response, please try again." }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Unknown error";
+
+    if (message.includes("503") || message.includes("Service Unavailable")) {
+      return NextResponse.json(
+        { error: "Server AI sedang sibuk karena permintaan tinggi. Silakan coba lagi dalam beberapa saat." },
+        { status: 503 }
+      );
     }
 
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 }
-    );
+    if (message.includes("429") || message.includes("Too Many Requests") || message.includes("quota")) {
+      return NextResponse.json(
+        { error: "Batas penggunaan AI hari ini sudah habis. Silakan coba lagi besok atau upgrade API key." },
+        { status: 429 }
+      );
+    }
+
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
+import { Loader2 } from "lucide-react";
 
 /* ─── Types ─────────────────────────────────────── */
 interface ScanResult {
@@ -36,11 +37,14 @@ export default function ScanFeature() {
   const [camera,  setCamera]      = useState(false);
   const [finalChoice, setFinalChoice] = useState<string | null>(null);
   const [queueCount, setQueueCount] = useState(0);
+  const [donateQueueCount, setDonateQueueCount] = useState(0);
 
   useEffect(() => {
     // Read queue count on mount
-    const existing = JSON.parse(localStorage.getItem("wearwise_sell_draft_list") || "[]");
-    setQueueCount(existing.length);
+    const existingSell = JSON.parse(localStorage.getItem("wearwise_sell_draft_list") || "[]");
+    setQueueCount(existingSell.length);
+    const existingDonate = JSON.parse(localStorage.getItem("wearwise_donate_draft_list") || "[]");
+    setDonateQueueCount(existingDonate.length);
   }, []);
 
   const inputRef  = useRef<HTMLInputElement>(null);
@@ -182,36 +186,86 @@ export default function ScanFeature() {
   };
 
   const handleProceed = async (scanAnother: boolean) => {
-    if (finalChoice === "Sell" && file && result) {
-      // Save data to localStorage to pass to the next page
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const base64Image = reader.result;
-        const sellData = {
-          id: Date.now().toString(),
-          image: base64Image,
-          fileName: file.name,
-          title: result.item,
-          price: result.sellPrice,
-          condition: result.condition,
-          fabric: result.fabric,
-          color: result.color
+    if (!file || !result || !finalChoice) return;
+    
+    if (loading) return; // Prevent concurrent calls
+    setLoading(true);
+    try {
+      const userStr = localStorage.getItem("user") || localStorage.getItem("partner_user");
+      const user = userStr ? JSON.parse(userStr) : null;
+      
+      const fd = new FormData();
+      fd.append("userId", user?.id || "");
+      fd.append("userChoice", finalChoice);
+      fd.append("aiRecommendation", result.recommendation);
+      fd.append("image", file);
+
+      const saveRes = await fetch("/api/scan/save", {
+        method: "POST",
+        body: fd
+      });
+      const saveData = await saveRes.json();
+
+      if (!saveRes.ok) throw new Error(saveData.error || "Failed to save scan progress");
+
+      // For Sell, Donate, Upcycle — we still use localStorage for the multi-item queue
+      // but the scan is now also in the DB.
+      if (finalChoice === "Sell" || finalChoice === "Donate" || finalChoice === "Upcycle" || finalChoice === "Recycle") {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          const base64Image = reader.result;
+          const itemData = {
+            id: saveData.scanId || Date.now().toString(),
+            image: base64Image,
+            fileName: file.name,
+            title: result.item,
+            price: result.sellPrice,
+            condition: result.condition,
+            fabric: result.fabric,
+            color: result.color
+          };
+
+          if (finalChoice === "Sell") {
+            const existing = JSON.parse(localStorage.getItem("wearwise_sell_draft_list") || "[]");
+            // Prevent adding same scan ID twice in local storage
+            if (!existing.some((e: any) => e.id === itemData.id)) {
+              existing.push(itemData);
+              localStorage.setItem("wearwise_sell_draft_list", JSON.stringify(existing));
+            }
+            if (scanAnother) {
+              setQueueCount(existing.length);
+              reset();
+              setLoading(false);
+            } else {
+              window.location.href = "/dashboard/sell/new";
+            }
+          } else if (finalChoice === "Donate") {
+            const existing = JSON.parse(localStorage.getItem("wearwise_donate_draft_list") || "[]");
+            // Prevent adding same scan ID twice in local storage
+            if (!existing.some((e: any) => e.id === itemData.id)) {
+              existing.push(itemData);
+              localStorage.setItem("wearwise_donate_draft_list", JSON.stringify(existing));
+            }
+            if (scanAnother) {
+              setDonateQueueCount(existing.length);
+              reset();
+              setLoading(false);
+            } else {
+              window.location.href = "/dashboard/donate/new";
+            }
+          } else if (finalChoice === "Upcycle") {
+            localStorage.setItem("wearwise_upcycle_item", JSON.stringify(itemData));
+            window.location.href = "/dashboard/upcycle/new";
+          } else if (finalChoice === "Recycle") {
+            localStorage.setItem("wearwise_recycle_item", JSON.stringify(itemData));
+            window.location.href = "/dashboard/recycle/new";
+          }
         };
-        const existing = JSON.parse(localStorage.getItem("wearwise_sell_draft_list") || "[]");
-        existing.push(sellData);
-        localStorage.setItem("wearwise_sell_draft_list", JSON.stringify(existing));
-        setQueueCount(existing.length);
-        
-        if (scanAnother) {
-          reset();
-        } else {
-          window.location.href = "/dashboard/sell/new";
-        }
-      };
-    } else {
-      // Handle other actions or placeholder
-      alert(`Proceeding to ${finalChoice} flow... (To be implemented)`);
+      }
+    } catch (err: any) {
+      setError(err.message);
+      setLoading(false);
     }
   };
 
@@ -582,8 +636,8 @@ export default function ScanFeature() {
               {finalChoice && (
                 <div className="choice-success relative overflow-hidden p-6 rounded-2xl border flex flex-col sm:flex-row items-center sm:items-start gap-4 transition-all"
                   style={{
-                    backgroundColor: `${REC_BG[finalChoice]?.split(" ")[0].replace("from-", "bg-").replace("50", "50/50")} || "#f8fafc"`,
-                    borderColor: `${REC_BG[finalChoice]?.split(" ")[0].replace("from-", "border-").replace("50", "200")} || "#e2e8f0"`,
+                    backgroundColor: `${result.recommendationColor}10`,
+                    borderColor: `${result.recommendationColor}30`,
                   }}
                 >
                   <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm text-2xl shrink-0">
@@ -594,10 +648,15 @@ export default function ScanFeature() {
                     <p className="text-sm text-slate-600 mb-4">You selected to <strong className="text-slate-800">{finalChoice}</strong> this item. Let's take the next step to give this item a new purpose.</p>
                     
                     <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                      {finalChoice === "Sell" && (
+                      {(finalChoice === "Sell" || finalChoice === "Donate") && (
                         <button 
                           onClick={() => handleProceed(true)}
-                          className="px-6 py-2.5 rounded-xl border-2 border-[#FF8C42] text-[#FF8C42] font-bold text-sm shadow-sm transition-all hover:bg-[#FF8C42]/10 active:scale-95 flex items-center justify-center gap-2"
+                          className="px-6 py-2.5 rounded-xl border-2 font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                          style={{
+                            borderColor: finalChoice === "Sell" ? "#FF8C42" : "#4DAAFF",
+                            color: finalChoice === "Sell" ? "#FF8C42" : "#4DAAFF",
+                            backgroundColor: "transparent"
+                          }}
                         >
                           ➕ Add & Scan Another
                         </button>
@@ -605,15 +664,51 @@ export default function ScanFeature() {
                       
                       <button 
                         onClick={() => handleProceed(false)}
-                        className="px-6 py-2.5 rounded-xl text-white font-bold text-sm shadow-md transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                        disabled={loading}
+                        className="px-6 py-2.5 rounded-xl text-white font-bold text-sm shadow-md transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 disabled:scale-100"
                         style={{ 
                           backgroundColor: finalChoice === "Sell" ? "#FF8C42" : finalChoice === "Donate" ? "#4DAAFF" : finalChoice === "Upcycle" ? "#B06AFF" : "#2DCB73"
                         }}
                       >
-                        Proceed to {finalChoice} {finalChoice === "Sell" && queueCount > 0 ? `(${queueCount + 1} items)` : ""}
-                        <span className="text-lg">→</span>
+                        {loading ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            Proceed to {finalChoice} 
+                            {finalChoice === "Sell" ? ` (${queueCount + 1} ${queueCount + 1 === 1 ? 'item' : 'items'})` : 
+                             finalChoice === "Donate" ? ` (${donateQueueCount + 1} ${donateQueueCount + 1 === 1 ? 'item' : 'items'})` : 
+                             ""}
+                            <span className="text-lg">→</span>
+                          </>
+                        )}
                       </button>
                     </div>
+
+                    {/* Queue management help */}
+                    {((finalChoice === "Sell" && queueCount > 0) || (finalChoice === "Donate" && donateQueueCount > 0)) && (
+                      <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                        <p className="text-[10px] text-slate-400 font-medium italic">
+                          * You have {finalChoice === "Sell" ? queueCount : donateQueueCount} other items waiting in your {finalChoice.toLowerCase()} list.
+                        </p>
+                        <button 
+                          onClick={() => {
+                            if (finalChoice === "Sell") {
+                              localStorage.removeItem("wearwise_sell_draft_list");
+                              setQueueCount(0);
+                            } else {
+                              localStorage.removeItem("wearwise_donate_draft_list");
+                              setDonateQueueCount(0);
+                            }
+                          }}
+                          className="text-[10px] font-bold text-red-400 hover:text-red-500 underline"
+                        >
+                          Clear List
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
