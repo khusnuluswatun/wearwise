@@ -313,7 +313,7 @@ export default function Dashboard() {
                     stroke="none"
                     cornerRadius={8}
                   >
-                    {dashboardData?.analytics?.map((entry, index) => (
+                    {dashboardData?.analytics?.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>

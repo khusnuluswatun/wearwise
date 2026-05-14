@@ -11,8 +11,8 @@ export default async function MarketPage() {
   
   const scans = await prisma.scan.findMany();
   
-  const marketItems = items.map(item => {
-    const scan = scans.find(s => s.id === item.scanId);
+  const marketItems = items.map((item: any) => {
+    const scan = scans.find((s: any) => s.id === item.scanId);
     return {
       ...item,
       imageUrl: scan?.imageUrl || "/placeholder.png"

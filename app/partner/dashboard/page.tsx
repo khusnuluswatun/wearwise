@@ -150,7 +150,7 @@ export default function PartnerDashboardPage() {
           </div>
         ) : (
           <div className="divide-y divide-slate-50">
-            {recent.map((tx) => {
+            {recent.map((tx: any) => {
               const cfg = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
               const Icon = cfg.icon;
               return (

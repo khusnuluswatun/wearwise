@@ -113,8 +113,8 @@ export async function GET(req: Request) {
     });
 
     const scans = await prisma.scan.findMany();
-    const itemsWithImages = items.map(item => {
-      const scan = scans.find(s => s.id === item.scanId);
+    const itemsWithImages = items.map((item: any) => {
+      const scan = scans.find((s: any) => s.id === item.scanId);
       return {
         ...item,
         imageUrl: scan?.imageUrl || "/placeholder.png"

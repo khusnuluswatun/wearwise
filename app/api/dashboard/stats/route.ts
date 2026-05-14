@@ -30,10 +30,10 @@ export async function GET(req: Request) {
     });
 
     const stats = {
-      donation: statsRaw.find(s => s.type.toLowerCase() === 'donate' || s.type.toLowerCase() === 'donasi')?._count.id || 0,
-      recycle: statsRaw.find(s => s.type.toLowerCase() === 'recycle')?._count.id || 0,
-      sell: statsRaw.find(s => s.type.toLowerCase() === 'sell')?._count.id || 0,
-      upcycle: statsRaw.find(s => s.type.toLowerCase() === 'upcycle')?._count.id || 0,
+      donation: statsRaw.find((s: any) => s.type.toLowerCase() === 'donate' || s.type.toLowerCase() === 'donasi')?._count.id || 0,
+      recycle: statsRaw.find((s: any) => s.type.toLowerCase() === 'recycle')?._count.id || 0,
+      sell: statsRaw.find((s: any) => s.type.toLowerCase() === 'sell')?._count.id || 0,
+      upcycle: statsRaw.find((s: any) => s.type.toLowerCase() === 'upcycle')?._count.id || 0,
     };
 
     // 3. Get Recent Activity (Merged from Transactions and Scans with choices)
@@ -59,14 +59,14 @@ export async function GET(req: Request) {
     // Filter out nulls and normalize to strings
     const transactedScanIds = new Set(
       transactedScanIdsRaw
-        .map(tx => tx.scanId)
-        .filter(id => id !== null && id !== undefined)
-        .map(id => String(id).trim())
+        .map((tx: any) => tx.scanId)
+        .filter((id: any) => id !== null && id !== undefined)
+        .map((id: any) => String(id).trim())
     );
 
     // Fetch details for each transaction
     const transactionActivities = await Promise.all(
-      transactions.map(async (tx) => {
+      transactions.map(async (tx: any) => {
         let itemName = "Item";
         if (tx.itemId) {
           const item = await prisma.item.findUnique({ where: { id: tx.itemId } });
@@ -106,8 +106,8 @@ export async function GET(req: Request) {
 
     // Add scans that haven't become transactions yet
     const scanActivities = recentScans
-      .filter(scan => !transactedScanIds.has(String(scan.id).trim()))
-      .map(scan => {
+      .filter((scan: any) => !transactedScanIds.has(String(scan.id).trim()))
+      .map((scan: any) => {
         let link = `/dashboard/scan`;
         if (scan.userChoice === "Donate") link = `/dashboard/donate/new?scanId=${scan.id}`;
         else if (scan.userChoice === "Sell") link = `/dashboard/my-market/new?scanId=${scan.id}`;
@@ -129,7 +129,7 @@ export async function GET(req: Request) {
 
     // Merge and sort
     const recentActivity = [...transactionActivities, ...scanActivities]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 5); // Limit to 5 items as requested
 
     // 4. Get Analytics (Counts by status)
@@ -139,14 +139,14 @@ export async function GET(req: Request) {
       _count: { id: true }
     });
 
-    const totalTransactions = analyticsRaw.reduce((acc, curr) => acc + curr._count.id, 0);
+    const totalTransactions = analyticsRaw.reduce((acc: any, curr: any) => acc + curr._count.id, 0);
     const analytics = [
-      { name: "Success", value: analyticsRaw.find(s => s.status.toLowerCase() === 'success')?._count.id || 0, color: "#3b82f6" },
-      { name: "Pending", value: (analyticsRaw.find(s => s.status.toLowerCase() === 'pending')?._count.id || 0) + 
-                                (analyticsRaw.find(s => s.status.toLowerCase() === 'confirmed')?._count.id || 0) + 
-                                (analyticsRaw.find(s => s.status.toLowerCase() === 'completed')?._count.id || 0) +
-                                (analyticsRaw.find(s => s.status.toLowerCase() === 'available')?._count.id || 0), color: "#fbbf24" },
-      { name: "Rejected", value: analyticsRaw.find(s => s.status.toLowerCase() === 'rejected')?._count.id || 0, color: "#f87171" },
+      { name: "Success", value: analyticsRaw.find((s: any) => s.status.toLowerCase() === 'success')?._count.id || 0, color: "#3b82f6" },
+      { name: "Pending", value: (analyticsRaw.find((s: any) => s.status.toLowerCase() === 'pending')?._count.id || 0) + 
+                                (analyticsRaw.find((s: any) => s.status.toLowerCase() === 'confirmed')?._count.id || 0) + 
+                                (analyticsRaw.find((s: any) => s.status.toLowerCase() === 'completed')?._count.id || 0) +
+                                (analyticsRaw.find((s: any) => s.status.toLowerCase() === 'available')?._count.id || 0), color: "#fbbf24" },
+      { name: "Rejected", value: analyticsRaw.find((s: any) => s.status.toLowerCase() === 'rejected')?._count.id || 0, color: "#f87171" },
     ];
 
     // 5. Get Report Data (Last 7 months)
@@ -172,7 +172,7 @@ export async function GET(req: Request) {
       reportMap[key] = 0;
     }
 
-    reportRaw.forEach(tx => {
+    reportRaw.forEach((tx: any) => {
       const d = new Date(tx.createdAt);
       const key = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
       if (reportMap[key] !== undefined) {
@@ -181,7 +181,7 @@ export async function GET(req: Request) {
     });
 
     const reportData = Object.keys(reportMap)
-      .map(key => ({ name: key, value: reportMap[key] }))
+      .map((key: any) => ({ name: key, value: reportMap[key] }))
       .reverse();
 
     return NextResponse.json({

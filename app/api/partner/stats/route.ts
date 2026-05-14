@@ -35,10 +35,10 @@ export async function GET(req: Request) {
     });
 
     const stats = {
-      pending: statsRaw.find(s => s.status.toLowerCase() === 'pending')?._count.id || 0,
-      confirmed: statsRaw.find(s => s.status.toLowerCase() === 'confirmed' || s.status.toLowerCase() === 'accepted')?._count.id || 0,
-      rejected: statsRaw.find(s => s.status.toLowerCase() === 'rejected')?._count.id || 0,
-      total: statsRaw.reduce((acc, curr) => acc + curr._count.id, 0)
+      pending: statsRaw.find((s: any) => s.status.toLowerCase() === 'pending')?._count.id || 0,
+      confirmed: statsRaw.find((s: any) => s.status.toLowerCase() === 'confirmed' || s.status.toLowerCase() === 'accepted')?._count.id || 0,
+      rejected: statsRaw.find((s: any) => s.status.toLowerCase() === 'rejected')?._count.id || 0,
+      total: statsRaw.reduce((acc: any, curr: any) => acc + curr._count.id, 0)
     };
 
     // 3. Get Recent Activity
@@ -52,7 +52,7 @@ export async function GET(req: Request) {
     });
 
     const recentActivity = await Promise.all(
-      transactions.map(async (tx) => {
+      transactions.map(async (tx: any) => {
         let itemName = tx.type === "recycle" ? "Barang Recycle" : tx.type === "upcycle" || tx.type === "umkm" ? "Barang Upcycle" : "Barang Donasi";
         if (tx.itemId) {
           const item = await prisma.item.findUnique({ where: { id: tx.itemId } });

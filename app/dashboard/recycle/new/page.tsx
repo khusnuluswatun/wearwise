@@ -185,7 +185,7 @@ export default function RecycleNewPage() {
         <div className="space-y-4">
           {loadingPartners ? <div className="py-20 text-center"><Loader2 className="animate-spin mx-auto mb-2" /><p className="text-xs text-slate-400 font-bold uppercase">Mencari Partner...</p></div> : (
             <div className="grid gap-3">
-              {partners.map(p => (
+              {partners.map((p: any) => (
                 <div key={p.id} onClick={() => setSelectedPartner(p)} className={`bg-white rounded-2xl p-4 border-2 cursor-pointer transition-all ${selectedPartner?.id === p.id ? "border-emerald-500 bg-emerald-50/20" : "border-slate-100"}`}>
                   <div className="flex justify-between items-start">
                     <h3 className="font-bold text-slate-800 text-sm">{p.name}</h3>

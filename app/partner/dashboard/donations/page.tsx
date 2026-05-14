@@ -64,7 +64,7 @@ export default function PartnerDonationsPage() {
     if (statusFilter === "all") {
       setFiltered(donations);
     } else {
-      setFiltered(donations.filter((d) => d.status === statusFilter));
+      setFiltered(donations.filter((d: any) => d.status === statusFilter));
     }
   }, [statusFilter, donations]);
 
@@ -83,7 +83,7 @@ export default function PartnerDonationsPage() {
 
       // Update local state
       setDonations((prev) =>
-        prev.map((d) => (d.id === txId ? { ...d, status: newStatus } : d))
+        prev.map((d: any) => (d.id === txId ? { ...d, status: newStatus } : d))
       );
       setSelectedTx(null); // Close modal on success
     } catch (err: any) {
@@ -95,9 +95,9 @@ export default function PartnerDonationsPage() {
 
   const counts = {
     all:       donations.length,
-    pending:   donations.filter((d) => d.status === "pending").length,
-    confirmed: donations.filter((d) => d.status === "confirmed").length,
-    rejected:  donations.filter((d) => d.status === "rejected").length,
+    pending:   donations.filter((d: any) => d.status === "pending").length,
+    confirmed: donations.filter((d: any) => d.status === "confirmed").length,
+    rejected:  donations.filter((d: any) => d.status === "rejected").length,
   };
 
   if (loading) return (
@@ -162,7 +162,7 @@ export default function PartnerDonationsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {filtered.map((tx) => {
+          {filtered.map((tx: any) => {
             const cfg = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
             const StatusIcon = cfg.icon;
 

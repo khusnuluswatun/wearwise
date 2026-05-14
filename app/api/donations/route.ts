@@ -127,7 +127,7 @@ export async function GET(req: Request) {
 
     // Fetch item data separately since Transaction.item relation doesn't exist in schema
     const txWithItems = await Promise.all(
-      transactions.map(async (tx) => {
+      transactions.map(async (tx: any) => {
         let item = null;
         if (tx.itemId) {
           item = await prisma.item.findUnique({ where: { id: tx.itemId } });

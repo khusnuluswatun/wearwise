@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Clock,
   AlertTriangle,
+  Star,
 } from "lucide-react";
 
 interface User {

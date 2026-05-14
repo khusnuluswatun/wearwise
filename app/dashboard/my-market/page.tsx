@@ -33,8 +33,8 @@ export default function SellMarketPage() {
     setLoading(false);
   };
 
-  const activeItems = items.filter(item => item.status === "available");
-  const historyItems = items.filter(item => item.status === "sold" || item.status === "pending");
+  const activeItems = items.filter((item: any) => item.status === "available");
+  const historyItems = items.filter((item: any) => item.status === "sold" || item.status === "pending");
 
   const displayItems = activeTab === "active" ? activeItems : historyItems;
 
@@ -112,7 +112,7 @@ export default function SellMarketPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {displayItems.map((item) => (
+          {displayItems.map((item: any) => (
             <Link href={`/dashboard/my-market/${item.id}`} key={item.id}>
               <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:shadow-slate-200/50 transition-all group h-full flex flex-col hover:-translate-y-2">
                 <div className="aspect-[4/5] bg-slate-100 relative overflow-hidden">

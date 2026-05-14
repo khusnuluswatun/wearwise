@@ -14,6 +14,7 @@ export default function TransactionDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!id) return;
     fetch(`/api/transactions/${id}`)
       .then(res => res.json())
       .then(result => {
@@ -51,7 +52,7 @@ export default function TransactionDetailPage() {
 
   const handleContactWA = () => {
     const phone = data?.partner?.phone?.replace(/[^0-9]/g, "");
-    if (!phone) return;
+    if (!phone || !id) return;
     const formattedPhone = phone.startsWith("0") ? "62" + phone.substring(1) : phone;
     const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(`Halo ${data.partner.name}, saya ingin bertanya mengenai pesanan ${data.type} #${id.toString().substring(0, 6)}`)}`;
     window.open(url, "_blank");
@@ -72,7 +73,7 @@ export default function TransactionDetailPage() {
         <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
           isUpcycle ? "bg-purple-50 text-purple-600" : "bg-green-50 text-green-600"
         }`}>
-          {data.type} #{id.toString().substring(0, 6)}
+          {data.type} #{id?.toString().substring(0, 6) || "..."}
         </div>
       </div>
 

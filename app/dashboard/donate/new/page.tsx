@@ -270,7 +270,7 @@ export default function DonateNewPage() {
             </div>
           ) : (
             <div className="grid gap-3">
-              {partners.map((partner) => (
+              {partners.map((partner: any) => (
                 <div 
                   key={partner.id}
                   onClick={() => setSelectedPartner(partner)}
