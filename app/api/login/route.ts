@@ -25,7 +25,6 @@ export async function POST(req: Request) {
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -33,12 +32,20 @@ export async function POST(req: Request) {
       );
     }
 
+    // If partner, fetch partner info
+    let partner = null;
+    if (user.role === "partner") {
+      partner = await prisma.partner.findUnique({
+        where: { userId: user.id },
+      });
+    }
+
     // In a real app, you would set a session cookie or JWT here.
     // For this demo, we'll just return the user info (excluding password).
     const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json(
-      { success: true, user: userWithoutPassword },
+      { success: true, user: { ...userWithoutPassword, partner } },
       { status: 200 }
     );
   } catch (err) {

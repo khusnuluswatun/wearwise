@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../../../lib/prisma";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
@@ -8,6 +8,7 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const userId = formData.get("userId") as string;
+    const existingScanId = formData.get("scanId") as string;
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const priceStr = formData.get("price") as string;
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
     
     const file = formData.get("image") as File;
     
-    if (!userId || !title || !price || !file) {
+    if (!userId || !title || !price) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -28,37 +29,66 @@ export async function POST(req: Request) {
       });
     }
 
-    // Save image locally
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const uploadDir = path.join(process.cwd(), "public/uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    const fileName = `${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-    const filePath = path.join(uploadDir, fileName);
-    fs.writeFileSync(filePath, buffer);
-    
-    const imageUrl = `/uploads/${fileName}`;
+    let imageUrl = "";
+    let scanId = existingScanId;
 
-    // Create Scan record
-    const scan = await prisma.scan.create({
-      data: {
-        userId,
-        imageUrl,
-        userChoice: "Sell",
-        aiRecommendation: "Sell"
+    if (existingScanId) {
+      const existingScan = await prisma.scan.findUnique({ where: { id: existingScanId } });
+      if (existingScan) {
+        imageUrl = existingScan.imageUrl;
+        // Update user choice
+        await prisma.scan.update({
+          where: { id: existingScanId },
+          data: { userChoice: "Sell" }
+        });
       }
-    });
+    }
+
+    if (!imageUrl && file) {
+      // Save image locally
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const uploadDir = path.join(process.cwd(), "public/uploads");
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      const fileName = `${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+      const filePath = path.join(uploadDir, fileName);
+      fs.writeFileSync(filePath, buffer);
+      
+      imageUrl = `/uploads/${fileName}`;
+
+      // Create Scan record
+      const scan = await prisma.scan.create({
+        data: {
+          userId,
+          imageUrl,
+          userChoice: "Sell",
+          aiRecommendation: "Sell"
+        }
+      });
+      scanId = scan.id;
+    }
 
     // Create Item record
     const item = await prisma.item.create({
       data: {
         userId,
-        scanId: scan.id,
+        scanId: scanId,
         title,
         description,
         price,
         status: "available"
+      }
+    });
+
+    // Create Transaction record so it shows up in dashboard activity
+    await prisma.transaction.create({
+      data: {
+        userId,
+        itemId: item.id,
+        scanId: scanId,
+        type: "sell",
+        status: "available",
       }
     });
 

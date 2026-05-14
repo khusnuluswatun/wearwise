@@ -30,8 +30,18 @@ export async function POST(req: Request) {
 
     const userRole = role === "partner" ? "partner" : "user";
 
-    // Create user and partner transactionally if role is partner
-    await prisma.$transaction(async (tx: any) => {
+    // Map partnerType to standardized values
+    let normalizedPartnerType = partnerType;
+    if (userRole === "partner") {
+      const typeMap: Record<string, string> = {
+        "tempat donasi": "donasi",
+        "tempat recycle": "recycle",
+        "umkm": "upcycle",
+      };
+      normalizedPartnerType = typeMap[partnerType?.toLowerCase()] || partnerType;
+    }
+
+    const result = await prisma.$transaction(async (tx: any) => {
       const user = await tx.user.create({
         data: {
           name,
@@ -43,21 +53,25 @@ export async function POST(req: Request) {
         },
       });
 
-      if (userRole === "partner" && partnerType) {
-        await tx.partner.create({
+      let partner = null;
+      if (userRole === "partner" && normalizedPartnerType) {
+        partner = await tx.partner.create({
           data: {
             userId: user.id,
-            type: partnerType,
+            type: normalizedPartnerType,
             name: name,
             address: address,
             phone: phone,
           },
         });
       }
+      return { user, partner };
     });
 
+    const { password: _, ...userWithoutPassword } = result.user;
+
     return NextResponse.json(
-      { success: true, message: "Registered successfully" },
+      { success: true, user: { ...userWithoutPassword, partner: result.partner } },
       { status: 201 }
     );
   } catch (err) {

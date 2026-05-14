@@ -1,7 +1,7 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,6 +20,8 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const base64 = Buffer.from(bytes).toString("base64");
     const mimeType = file.type as "image/jpeg" | "image/png" | "image/webp";
+
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `You are WearWise AI, an expert garment analyst. Analyze this clothing item photo carefully.
 
@@ -54,24 +56,38 @@ Rules:
      - For UNBRANDED items, set sellPrice to exactly "Rp 150.000".
      - For BRANDED items, estimate the original retail price and reduce it just a little bit. Give the final maximum estimated sellPrice in IDR string.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [
-        {
-          parts: [
-            { text: prompt },
-            {
-              inlineData: {
-                mimeType,
-                data: base64,
-              },
-            },
-          ],
-        },
-      ],
-    });
+    // Retry logic for robust API calls
+    let result;
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    const text = response.text?.trim() ?? "";
+    while (attempts < maxAttempts) {
+      try {
+        attempts++;
+        result = await model.generateContent([
+          { text: prompt },
+          {
+            inlineData: {
+              mimeType,
+              data: base64,
+            },
+          },
+        ]);
+        break; // Success!
+      } catch (err: any) {
+        const isRetryable = err.message?.includes("503") || err.message?.includes("Service Unavailable") || err.message?.includes("overloaded");
+        if (isRetryable && attempts < maxAttempts) {
+          console.log(`Gemini busy (attempt ${attempts}), retrying in ${attempts * 1000}ms...`);
+          await new Promise(resolve => setTimeout(resolve, attempts * 1000));
+          continue;
+        }
+        throw err; // Not retryable or max attempts reached
+      }
+    }
+
+    if (!result) throw new Error("Failed to get response from AI after retries");
+
+    const text = result.response.text().trim();
 
     // Clean up any markdown wrappers if present
     const cleaned = text.replace(/^```json\s*/i, "").replace(/\s*```$/i, "").trim();
@@ -86,11 +102,17 @@ Rules:
     }
 
     return NextResponse.json({ success: true, data });
-  } catch (err) {
-    console.error("Scan API error:", err);
+  } catch (err: any) {
+    console.error("Scan API error detail:", JSON.stringify(err, null, 2));
+    console.error("Scan API error message:", err.message);
 
-    if (err instanceof SyntaxError) {
-      return NextResponse.json({ error: "AI returned invalid response, please try again." }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Unknown error";
+
+    if (message.includes("503") || message.includes("Service Unavailable")) {
+      return NextResponse.json(
+        { error: "AI returned invalid response, please try again." },
+        { status: 503 }
+      );
     }
 
     // Handle Gemini API quota exceeded (429 RESOURCE_EXHAUSTED)
@@ -103,7 +125,7 @@ Rules:
     }
 
     return NextResponse.json(
-      { error: errMsg || "Unknown error" },
+      { error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 }
     );
   }

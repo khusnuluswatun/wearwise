@@ -60,11 +60,12 @@ export default function Navbar() {
               { label: "How It Works",href: "#how-it-works" },
               { label: "Actions",     href: "#actions" },
               { label: "Scan",        href: "/scan" },
+              { label: "Partner",     href: "/login" },
             ].map((link) => (
               <a
                 key={link.label}
                 href={link.href}
-                className="text-sm text-slate-500 hover:text-[#22c55e] transition-colors duration-200 font-medium"
+                className={`text-sm ${link.label === "Partner" ? "text-blue-500 font-bold" : "text-slate-500"} hover:text-[#22c55e] transition-colors duration-200 font-medium`}
               >
                 {link.label}
               </a>

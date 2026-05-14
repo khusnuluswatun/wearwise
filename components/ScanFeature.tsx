@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
+import { Loader2 } from "lucide-react";
 
 /* ─── Types ─────────────────────────────────────── */
 interface ScanResult {
@@ -20,31 +21,34 @@ interface ScanResult {
 }
 
 const REC_BG: Record<string, string> = {
-  Sell:    "from-orange-50  to-amber-50",
-  Donate:  "from-blue-50    to-sky-50",
+  Sell: "from-orange-50  to-amber-50",
+  Donate: "from-blue-50    to-sky-50",
   Upcycle: "from-purple-50  to-violet-50",
   Recycle: "from-emerald-50 to-green-50",
 };
 
 /* ─── Component ─────────────────────────────────── */
 export default function ScanFeature() {
-  const [preview, setPreview]     = useState<string | null>(null);
-  const [file,    setFile]        = useState<File | null>(null);
-  const [loading, setLoading]     = useState(false);
-  const [result,  setResult]      = useState<ScanResult | null>(null);
-  const [error,   setError]       = useState<string | null>(null);
-  const [camera,  setCamera]      = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<ScanResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [camera, setCamera] = useState(false);
   const [finalChoice, setFinalChoice] = useState<string | null>(null);
   const [queueCount, setQueueCount] = useState(0);
+  const [donateQueueCount, setDonateQueueCount] = useState(0);
 
   useEffect(() => {
     // Read queue count on mount
-    const existing = JSON.parse(localStorage.getItem("wearwise_sell_draft_list") || "[]");
-    setQueueCount(existing.length);
+    const existingSell = JSON.parse(localStorage.getItem("wearwise_sell_draft_list") || "[]");
+    setQueueCount(existingSell.length);
+    const existingDonate = JSON.parse(localStorage.getItem("wearwise_donate_draft_list") || "[]");
+    setDonateQueueCount(existingDonate.length);
   }, []);
 
-  const inputRef  = useRef<HTMLInputElement>(null);
-  const videoRef  = useRef<HTMLVideoElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -67,7 +71,7 @@ export default function ScanFeature() {
     }, containerRef);
     return () => ctx.revert();
   }, []);
-  
+
   useEffect(() => {
     if (result) {
       gsap.from(".result-stagger", {
@@ -125,7 +129,7 @@ export default function ScanFeature() {
   const takePhoto = () => {
     if (!videoRef.current) return;
     const canvas = document.createElement("canvas");
-    canvas.width  = videoRef.current.videoWidth;
+    canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
     canvas.getContext("2d")!.drawImage(videoRef.current, 0, 0);
     canvas.toBlob((blob) => {
@@ -175,43 +179,94 @@ export default function ScanFeature() {
 
   const handleChoice = (choice: string) => {
     setFinalChoice(choice);
-    gsap.fromTo(".choice-success", 
-      { opacity: 0, y: 20 }, 
+    gsap.fromTo(".choice-success",
+      { opacity: 0, y: 20 },
       { opacity: 1, y: 0, duration: 0.5, ease: "back.out(1.7)" }
     );
   };
 
   const handleProceed = async (scanAnother: boolean) => {
-    if (finalChoice === "Sell" && file && result) {
-      // Save data to localStorage to pass to the next page
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const base64Image = reader.result;
-        const sellData = {
-          id: Date.now().toString(),
-          image: base64Image,
-          fileName: file.name,
-          title: result.item,
-          price: result.sellPrice,
-          condition: result.condition,
-          fabric: result.fabric,
-          color: result.color
+    if (!file || !result || !finalChoice) return;
+
+    if (loading) return; // Prevent concurrent calls
+    setLoading(true);
+
+    try {
+      const userStr = localStorage.getItem("user") || localStorage.getItem("partner_user");
+      const user = userStr ? JSON.parse(userStr) : null;
+
+      const fd = new FormData();
+      fd.append("userId", user?.id || "");
+      fd.append("userChoice", finalChoice);
+      fd.append("aiRecommendation", result.recommendation);
+      fd.append("image", file);
+
+      const saveRes = await fetch("/api/scan/save", {
+        method: "POST",
+        body: fd
+      });
+      const saveData = await saveRes.json();
+
+      if (!saveRes.ok) throw new Error(saveData.error || "Failed to save scan progress");
+
+      // For Sell, Donate, Upcycle — we still use localStorage for the multi-item queue
+      // but the scan is now also in the DB.
+      if (finalChoice === "Sell" || finalChoice === "Donate" || finalChoice === "Upcycle" || finalChoice === "Recycle") {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          const base64Image = reader.result;
+          const itemData = {
+            id: saveData.scanId || Date.now().toString(),
+            image: base64Image,
+            fileName: file.name,
+            title: result.item,
+            price: result.sellPrice,
+            condition: result.condition,
+            fabric: result.fabric,
+            color: result.color
+          };
+
+          if (finalChoice === "Sell") {
+            const existing = JSON.parse(localStorage.getItem("wearwise_sell_draft_list") || "[]");
+            // Prevent adding same scan ID twice in local storage
+            if (!existing.some((e: any) => e.id === itemData.id)) {
+              existing.push(itemData);
+              localStorage.setItem("wearwise_sell_draft_list", JSON.stringify(existing));
+            }
+            if (scanAnother) {
+              setQueueCount(existing.length);
+              reset();
+              setLoading(false);
+            } else {
+              window.location.href = "/dashboard/my-market/new";
+            }
+          } else if (finalChoice === "Donate") {
+            const existing = JSON.parse(localStorage.getItem("wearwise_donate_draft_list") || "[]");
+            // Prevent adding same scan ID twice in local storage
+            if (!existing.some((e: any) => e.id === itemData.id)) {
+              existing.push(itemData);
+              localStorage.setItem("wearwise_donate_draft_list", JSON.stringify(existing));
+            }
+            if (scanAnother) {
+              setDonateQueueCount(existing.length);
+              reset();
+              setLoading(false);
+            } else {
+              window.location.href = "/dashboard/donate/new";
+            }
+          } else if (finalChoice === "Upcycle") {
+            localStorage.setItem("wearwise_upcycle_item", JSON.stringify(itemData));
+            window.location.href = "/dashboard/upcycle/new";
+          } else if (finalChoice === "Recycle") {
+            localStorage.setItem("wearwise_recycle_item", JSON.stringify(itemData));
+            window.location.href = "/dashboard/recycle/new";
+          }
         };
-        const existing = JSON.parse(localStorage.getItem("wearwise_sell_draft_list") || "[]");
-        existing.push(sellData);
-        localStorage.setItem("wearwise_sell_draft_list", JSON.stringify(existing));
-        setQueueCount(existing.length);
-        
-        if (scanAnother) {
-          reset();
-        } else {
-          window.location.href = "/dashboard/my-market/new";
-        }
-      };
-    } else {
-      // Handle other actions or placeholder
-      alert(`Proceeding to ${finalChoice} flow... (To be implemented)`);
+      }
+    } catch (err: any) {
+      setError(err.message);
+      setLoading(false);
     }
   };
 
@@ -272,9 +327,8 @@ export default function ScanFeature() {
 
             {/* Drop zone */}
             <div
-              className={`relative border-2 border-dashed rounded-2xl m-4 transition-all duration-300 ${
-                preview ? "border-[#22c55e] bg-emerald-50/40" : "border-[#e2e8f0] hover:border-[#22c55e] hover:bg-emerald-50/20"
-              }`}
+              className={`relative border-2 border-dashed rounded-2xl m-4 transition-all duration-300 ${preview ? "border-[#22c55e] bg-emerald-50/40" : "border-[#e2e8f0] hover:border-[#22c55e] hover:bg-emerald-50/20"
+                }`}
               onDrop={onDrop}
               onDragOver={e => e.preventDefault()}
             >
@@ -519,17 +573,17 @@ export default function ScanFeature() {
                 <h3 className="text-lg font-bold text-slate-800">What would you like to do?</h3>
                 <p className="text-sm text-slate-500">The AI recommended <strong style={{ color: result.recommendationColor }}>{result.recommendation}</strong>, but the final choice is yours.</p>
               </div>
-              
+
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                 {[
-                  { label: "Sell",    emoji: "🏷️", color: "#FF8C42", desc: "List in marketplace", pts: 50 },
-                  { label: "Donate",  emoji: "🤝", color: "#4DAAFF", desc: "Give to charity", pts: 30 },
+                  { label: "Sell", emoji: "🏷️", color: "#FF8C42", desc: "List in marketplace", pts: 50 },
+                  { label: "Donate", emoji: "🤝", color: "#4DAAFF", desc: "Give to charity", pts: 30 },
                   { label: "Upcycle", emoji: "✂️", color: "#B06AFF", desc: "Repurpose fabric", pts: 20 },
                   { label: "Recycle", emoji: "♻️", color: "#2DCB73", desc: "Send to recycling", pts: 10 },
                 ].map(({ label, emoji, color, desc, pts }, index, array) => {
                   const isRecommended = result.recommendation === label;
                   const isSelected = finalChoice === label || (!finalChoice && isRecommended);
-                  
+
                   // Determine if option is disabled based on hierarchy
                   const recIndex = array.findIndex(opt => opt.label === result.recommendation);
                   const isDisabled = index < recIndex;
@@ -539,9 +593,8 @@ export default function ScanFeature() {
                       key={label}
                       onClick={() => !isDisabled && handleChoice(label)}
                       disabled={isDisabled}
-                      className={`group flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all relative ${
-                        isDisabled ? "opacity-40 cursor-not-allowed bg-slate-50 grayscale" : "hover:-translate-y-1 cursor-pointer"
-                      }`}
+                      className={`group flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all relative ${isDisabled ? "opacity-40 cursor-not-allowed bg-slate-50 grayscale" : "hover:-translate-y-1 cursor-pointer"
+                        }`}
                       style={{
                         borderColor: isSelected ? color : "#e2e8f0",
                         background: isSelected ? `${color}08` : isDisabled ? undefined : "white",
@@ -555,7 +608,7 @@ export default function ScanFeature() {
                           </span>
                         </div>
                       )}
-                      
+
                       {/* Selection Checkmark */}
                       {isSelected && (
                         <div className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px]" style={{ backgroundColor: color }}>
@@ -566,11 +619,10 @@ export default function ScanFeature() {
                       <span className={`text-3xl mb-2 ${!isDisabled && "group-hover:scale-110 transition-transform"}`}>{emoji}</span>
                       <span className="font-bold text-slate-800">{label}</span>
                       <span className="text-[10px] text-slate-500 text-center mt-1 leading-tight">{desc}</span>
-                      
+
                       {/* Points Reward Pill */}
-                      <span className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 ${
-                        isDisabled ? "text-slate-400 bg-slate-200" : "text-amber-600 bg-amber-100"
-                      }`}>
+                      <span className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 ${isDisabled ? "text-slate-400 bg-slate-200" : "text-amber-600 bg-amber-100"
+                        }`}>
                         ⭐ +{pts} pts
                       </span>
                     </button>
@@ -582,8 +634,8 @@ export default function ScanFeature() {
               {finalChoice && (
                 <div className="choice-success relative overflow-hidden p-6 rounded-2xl border flex flex-col sm:flex-row items-center sm:items-start gap-4 transition-all"
                   style={{
-                    backgroundColor: `${REC_BG[finalChoice]?.split(" ")[0].replace("from-", "bg-").replace("50", "50/50")} || "#f8fafc"`,
-                    borderColor: `${REC_BG[finalChoice]?.split(" ")[0].replace("from-", "border-").replace("50", "200")} || "#e2e8f0"`,
+                    backgroundColor: `${result.recommendationColor}10`,
+                    borderColor: `${result.recommendationColor}30`,
                   }}
                 >
                   <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm text-2xl shrink-0">
@@ -592,28 +644,69 @@ export default function ScanFeature() {
                   <div className="flex-1 text-center sm:text-left">
                     <h4 className="font-extrabold text-slate-800 text-lg mb-1">Great choice! 🎉</h4>
                     <p className="text-sm text-slate-600 mb-4">You selected to <strong className="text-slate-800">{finalChoice}</strong> this item. Let's take the next step to give this item a new purpose.</p>
-                    
+
                     <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                      {finalChoice === "Sell" && (
-                        <button 
+                      {(finalChoice === "Sell" || finalChoice === "Donate") && (
+                        <button
                           onClick={() => handleProceed(true)}
-                          className="px-6 py-2.5 rounded-xl border-2 border-[#FF8C42] text-[#FF8C42] font-bold text-sm shadow-sm transition-all hover:bg-[#FF8C42]/10 active:scale-95 flex items-center justify-center gap-2"
+                          className="px-6 py-2.5 rounded-xl border-2 font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                          style={{
+                            borderColor: finalChoice === "Sell" ? "#FF8C42" : "#4DAAFF",
+                            color: finalChoice === "Sell" ? "#FF8C42" : "#4DAAFF",
+                            backgroundColor: "transparent"
+                          }}
                         >
                           ➕ Add & Scan Another
                         </button>
                       )}
-                      
-                      <button 
+
+                      <button
                         onClick={() => handleProceed(false)}
-                        className="px-6 py-2.5 rounded-xl text-white font-bold text-sm shadow-md transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
-                        style={{ 
+                        disabled={loading}
+                        className="px-6 py-2.5 rounded-xl text-white font-bold text-sm shadow-md transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 disabled:scale-100"
+                        style={{
                           backgroundColor: finalChoice === "Sell" ? "#FF8C42" : finalChoice === "Donate" ? "#4DAAFF" : finalChoice === "Upcycle" ? "#B06AFF" : "#2DCB73"
                         }}
                       >
-                        Proceed to {finalChoice} {finalChoice === "Sell" && queueCount > 0 ? `(${queueCount + 1} items)` : ""}
-                        <span className="text-lg">→</span>
+                        {loading ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            Proceed to {finalChoice}
+                            {finalChoice === "Sell" ? ` (${queueCount + 1} ${queueCount + 1 === 1 ? 'item' : 'items'})` :
+                              finalChoice === "Donate" ? ` (${donateQueueCount + 1} ${donateQueueCount + 1 === 1 ? 'item' : 'items'})` :
+                                ""}
+                            <span className="text-lg">→</span>
+                          </>
+                        )}
                       </button>
                     </div>
+
+                    {/* Queue management help */}
+                    {((finalChoice === "Sell" && queueCount > 0) || (finalChoice === "Donate" && donateQueueCount > 0)) && (
+                      <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                        <p className="text-[10px] text-slate-400 font-medium italic">
+                          * You have {finalChoice === "Sell" ? queueCount : donateQueueCount} other items waiting in your {finalChoice.toLowerCase()} list.
+                        </p>
+                        <button
+                          onClick={() => {
+                            if (finalChoice === "Sell") {
+                              localStorage.removeItem("wearwise_sell_draft_list");
+                              setQueueCount(0);
+                            } else {
+                              localStorage.removeItem("wearwise_donate_draft_list");
+                              setDonateQueueCount(0);
+                            }
+                          }}
+                          className="text-[10px] font-bold text-red-400 hover:text-red-500 underline"
+                        >
+                          Clear List
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -639,7 +732,7 @@ export default function ScanFeature() {
               { icon: "🎯", title: "Show Entire Item", desc: "Make sure the clothing is visible entirely from top to bottom." },
               { icon: "⚡", title: "Instant Analysis", desc: "Get comprehensive results in seconds using Gemini AI." },
             ].map((tip, i) => (
-               <div key={i} className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm">
+              <div key={i} className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm">
                 <div className="text-2xl mb-2">{tip.icon}</div>
                 <p className="font-semibold text-[#0f172a] text-sm mb-1">{tip.title}</p>
                 <p className="text-slate-400 text-xs leading-relaxed">{tip.desc}</p>
