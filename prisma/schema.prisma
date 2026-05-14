@@ -17,11 +17,13 @@ model User {
   role          String   @default("user") // "user" or "partner"
   createdAt     DateTime @default(now())
 
-  partner       Partner?
-  scans         Scan[]
-  items         Item[]
-  transactions  Transaction[]
-  rewards       Reward[]
+  partner           Partner?
+  scans             Scan[]
+  items             Item[]
+  transactions      Transaction[]
+  rewards           Reward[]
+  saleMade          SaleTransaction[] @relation("SellerTransactions")
+  saleBought        SaleTransaction[] @relation("BuyerTransactions")
 }
 
 model Scan {
@@ -58,7 +60,24 @@ model Item {
   price       Int
   status      String   @default("available")
 
-  user User @relation(fields: [userId], references: [id])
+  user         User             @relation(fields: [userId], references: [id])
+  saleTransactions SaleTransaction[]
+}
+
+model SaleTransaction {
+  id              String   @id @default(uuid())
+  itemId          String
+  sellerId        String
+  buyerId         String
+  proofImageUrl   String
+  status          String   @default("pending_verification") // pending_verification | verified | rejected
+  pointsAwarded   Int      @default(0)
+  createdAt       DateTime @default(now())
+  verifiedAt      DateTime?
+
+  item    Item @relation(fields: [itemId], references: [id])
+  seller  User @relation("SellerTransactions", fields: [sellerId], references: [id])
+  buyer   User @relation("BuyerTransactions", fields: [buyerId], references: [id])
 }
 
 model Transaction {

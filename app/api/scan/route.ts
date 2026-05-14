@@ -1,7 +1,7 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,8 +20,6 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const base64 = Buffer.from(bytes).toString("base64");
     const mimeType = file.type as "image/jpeg" | "image/png" | "image/webp";
-
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `You are WearWise AI, an expert garment analyst. Analyze this clothing item photo carefully.
 
@@ -56,17 +54,24 @@ Rules:
      - For UNBRANDED items, set sellPrice to exactly "Rp 150.000".
      - For BRANDED items, estimate the original retail price and reduce it just a little bit. Give the final maximum estimated sellPrice in IDR string.`;
 
-    const result = await model.generateContent([
-      { text: prompt },
-      {
-        inlineData: {
-          mimeType,
-          data: base64,
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType,
+                data: base64,
+              },
+            },
+          ],
         },
-      },
-    ]);
+      ],
+    });
 
-    const text = result.response.text().trim();
+    const text = response.text?.trim() ?? "";
 
     // Clean up any markdown wrappers if present
     const cleaned = text.replace(/^```json\s*/i, "").replace(/\s*```$/i, "").trim();
@@ -88,9 +93,19 @@ Rules:
       return NextResponse.json({ error: "AI returned invalid response, please try again." }, { status: 500 });
     }
 
+    // Handle Gemini API quota exceeded (429 RESOURCE_EXHAUSTED)
+    const errMsg = err instanceof Error ? err.message : String(err);
+    if (errMsg.includes("429") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("quota")) {
+      return NextResponse.json(
+        { error: "Batas penggunaan AI hari ini sudah habis (quota exceeded). Silakan coba lagi besok atau hubungi admin untuk upgrade API key." },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
+      { error: errMsg || "Unknown error" },
       { status: 500 }
     );
   }
 }
+

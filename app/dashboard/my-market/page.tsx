@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Plus, Tag, MapPin, Star } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 // For demo purposes, we will fetch all items. In a real app, this might be filtered or paginated.
 export default async function SellMarketPage() {
   const items = await prisma.item.findMany({
@@ -53,40 +55,42 @@ export default async function SellMarketPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {marketItems.map((item) => (
-            <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow group">
-              <div className="aspect-[4/5] bg-slate-100 relative overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={item.imageUrl} 
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm border border-white/50 flex items-center gap-1.5">
-                  <Star size={14} className="text-amber-500 fill-amber-500" />
-                  <span className="text-xs font-bold text-slate-700">Mulus</span>
+            <Link href={`/dashboard/my-market/${item.id}`} key={item.id}>
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow group h-full flex flex-col hover:-translate-y-1">
+                <div className="aspect-[4/5] bg-slate-100 relative overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm border border-white/50 flex items-center gap-1.5">
+                    <Star size={14} className="text-amber-500 fill-amber-500" />
+                    <span className="text-xs font-bold text-slate-700">Mulus</span>
+                  </div>
                 </div>
-              </div>
-              <div className="p-5">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold text-slate-800 line-clamp-1 flex-1 pr-2">{item.title}</h3>
-                </div>
-                <p className="text-lg font-display font-extrabold text-green-600 mb-3">
-                  Rp {item.price.toLocaleString("id-ID")}
-                </p>
-                
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-slate-500">
-                    <MapPin size={14} />
-                    <span className="text-xs font-medium truncate max-w-[120px]">
-                      {item.user?.address || "Alamat tidak tersedia"}
+                <div className="p-5 flex flex-col flex-1">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-bold text-slate-800 line-clamp-2 flex-1 pr-2 group-hover:text-green-600 transition-colors">{item.title}</h3>
+                  </div>
+                  <p className="text-lg font-display font-extrabold text-green-600 mb-3 mt-auto">
+                    Rp {item.price.toLocaleString("id-ID")}
+                  </p>
+                  
+                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between mt-auto">
+                    <div className="flex items-center gap-1.5 text-slate-500">
+                      <MapPin size={14} />
+                      <span className="text-xs font-medium truncate max-w-[120px]">
+                        {item.user?.address || "Alamat tidak tersedia"}
+                      </span>
+                    </div>
+                    <span className="px-2.5 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded-md uppercase tracking-wider">
+                      {item.status}
                     </span>
                   </div>
-                  <span className="px-2.5 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded-md uppercase tracking-wider">
-                    {item.status}
-                  </span>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

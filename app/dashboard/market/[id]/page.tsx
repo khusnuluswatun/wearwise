@@ -3,9 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, MapPin, MessageCircle, User, ShieldCheck } from "lucide-react";
 
-export default async function ItemDetailPage({ params }: { params: { id: string } }) {
+export default async function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+
   const item = await prisma.item.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { user: true }
   });
 

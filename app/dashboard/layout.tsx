@@ -11,7 +11,8 @@ import {
   LogOut, 
   Leaf,
   Menu,
-  X
+  X,
+  Bell
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -22,19 +23,27 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
     if (userStr) {
-      setUser(JSON.parse(userStr));
+      const u = JSON.parse(userStr);
+      setUser(u);
+      // Fetch pending notification count
+      fetch(`/api/notifications?buyerId=${u.id}`)
+        .then((r) => r.json())
+        .then((d) => { if (d.success) setNotifCount(d.notifications.length); })
+        .catch(() => {});
     }
   }, []);
 
   const navItems = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Scan", href: "/dashboard/scan", icon: ScanLine },
-    { name: "Market", href: "/dashboard/market", icon: ShoppingBag },
-    { name: "My Market", href: "/dashboard/my-market", icon: Store },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, badge: 0 },
+    { name: "Scan", href: "/dashboard/scan", icon: ScanLine, badge: 0 },
+    { name: "Market", href: "/dashboard/market", icon: ShoppingBag, badge: 0 },
+    { name: "My Market", href: "/dashboard/my-market", icon: Store, badge: 0 },
+    { name: "Notifikasi", href: "/dashboard/notifications", icon: Bell, badge: notifCount },
   ];
 
   const handleLogout = () => {
@@ -73,7 +82,7 @@ export default function DashboardLayout({
         {/* Navigation */}
         <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
             const Icon = item.icon;
             return (
               <Link
@@ -88,6 +97,11 @@ export default function DashboardLayout({
               >
                 <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "text-green-500" : "text-slate-400"} />
                 {item.name}
+                {item.badge > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}
