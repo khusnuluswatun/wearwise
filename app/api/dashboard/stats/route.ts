@@ -108,11 +108,11 @@ export async function GET(req: Request) {
     const scanActivities = recentScans
       .filter(scan => !transactedScanIds.has(String(scan.id).trim()))
       .map(scan => {
-        let link = "/dashboard/scan";
-        if (scan.userChoice === "Donate") link = "/dashboard/donate/new";
-        else if (scan.userChoice === "Sell") link = "/dashboard/sell/new";
-        else if (scan.userChoice === "Upcycle") link = "/dashboard/upcycle/new";
-        else if (scan.userChoice === "Recycle") link = "/dashboard/recycle/new";
+        let link = `/dashboard/scan`;
+        if (scan.userChoice === "Donate") link = `/dashboard/donate/new?scanId=${scan.id}`;
+        else if (scan.userChoice === "Sell") link = `/dashboard/my-market/new?scanId=${scan.id}`;
+        else if (scan.userChoice === "Upcycle") link = `/dashboard/upcycle/new?scanId=${scan.id}`;
+        else if (scan.userChoice === "Recycle") link = `/dashboard/recycle/new?scanId=${scan.id}`;
 
         return {
           id: `#${scan.id.substring(0, 6)}`,

@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Tag, MapPin, AlignLeft, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 
-export default function SellNewPage() {
+function SellNewContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [draftList, setDraftList] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -15,24 +17,64 @@ export default function SellNewPage() {
   // We need to maintain an array of formData, one for each item
   const [itemsData, setItemsData] = useState<any[]>([]);
   const [address, setAddress] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
+    let initialItems: any[] = [];
+    let parsedList: any[] = [];
+
     // Load draft data list
     const listStr = localStorage.getItem("wearwise_sell_draft_list");
     if (listStr) {
-      const parsedList = JSON.parse(listStr);
-      setDraftList(parsedList);
-      
-      const initialItems = parsedList.map((draft: any) => ({
-        id: draft.id,
-        title: draft.title || "",
-        price: draft.price || "",
-        description: `Kondisi: ${draft.condition}\nBahan: ${draft.fabric}\nWarna: ${draft.color}\n\n`,
-        image: draft.image,
-        fileName: draft.fileName
-      }));
-      setItemsData(initialItems);
+      try {
+        parsedList = JSON.parse(listStr);
+        setDraftList(parsedList);
+        
+        initialItems = parsedList.map((draft: any) => ({
+          id: draft.id,
+          title: draft.title || "",
+          price: draft.price || "",
+          description: `Kondisi: ${draft.condition}\nBahan: ${draft.fabric}\nWarna: ${draft.color}\n\n`,
+          image: draft.image,
+          fileName: draft.fileName
+        }));
+        setItemsData(initialItems);
+      } catch (e) {
+        console.error("Failed to parse draft list", e);
+      }
     }
+
+    // Check for scanId in URL if no drafts
+    const scanId = searchParams.get("scanId");
+    const fetchScanFromDB = async () => {
+      if (scanId && !initialItems.some(i => i.id === scanId)) {
+        try {
+          const res = await fetch(`/api/scan?id=${scanId}`);
+          const data = await res.json();
+          if (data.success && data.scan) {
+            const scan = data.scan;
+            // Parse result from scan.result
+            let resultData: any = {};
+            try {
+              if (scan.result) resultData = JSON.parse(scan.result);
+            } catch (e) {}
+
+            const newItem = {
+              id: scan.id,
+              title: resultData.name || "Barang Scan",
+              price: resultData.sellPrice || "",
+              description: `Kondisi: ${resultData.condition || "Baik"}\nBahan: ${resultData.fabric || "-"}\nWarna: ${resultData.color || "-"}\n\n`,
+              image: scan.imageUrl,
+              fileName: "scan.jpg"
+            };
+            setItemsData(prev => [...prev, newItem]);
+            setDraftList(prev => [...prev, { ...newItem, condition: resultData.condition, fabric: resultData.fabric, color: resultData.color }]);
+          }
+        } catch (err) {
+          console.error("Failed to fetch scan details:", err);
+        }
+      }
+    };
 
     // Load user and fetch latest address from DB
     const userStr = localStorage.getItem("user");
@@ -40,12 +82,10 @@ export default function SellNewPage() {
       const parsedUser = JSON.parse(userStr);
       setUser(parsedUser);
       
-      // Fallback initially
       if (parsedUser.address) {
         setAddress(parsedUser.address);
       }
 
-      // Fetch fresh address from DB
       fetch(`/api/user?id=${parsedUser.id}`)
         .then(res => res.json())
         .then(data => {
@@ -53,9 +93,14 @@ export default function SellNewPage() {
             setAddress(data.user.address);
           }
         })
-        .catch(err => console.error("Failed to fetch fresh address:", err));
+        .catch(err => console.error("Failed to fetch fresh address:", err))
+        .finally(() => {
+          fetchScanFromDB().finally(() => setIsInitialized(true));
+        });
+    } else {
+      fetchScanFromDB().finally(() => setIsInitialized(true));
     }
-  }, []);
+  }, [searchParams]);
 
   const handleItemChange = (index: number, field: string, value: string) => {
     const newItems = [...itemsData];
@@ -134,11 +179,29 @@ export default function SellNewPage() {
     }
   };
 
-  if (itemsData.length === 0) {
+  if (!isInitialized) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 text-green-500 animate-spin mb-4" />
         <p className="text-slate-500">Memuat data barang...</p>
+      </div>
+    );
+  }
+
+  if (itemsData.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in duration-500">
+        <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
+          <Tag size={40} className="text-slate-300" />
+        </div>
+        <h2 className="text-2xl font-bold text-slate-800 mb-2">Antrean Jual Kosong</h2>
+        <p className="text-slate-500 mb-8 max-w-sm text-center">Belum ada barang yang di-scan atau masuk antrean jual. Silakan scan barang terlebih dahulu.</p>
+        <Link 
+          href="/dashboard/scan" 
+          className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-green-500/30 transition-all hover:-translate-y-1"
+        >
+          Mulai Scan Barang
+        </Link>
       </div>
     );
   }
@@ -275,5 +338,18 @@ export default function SellNewPage() {
       </form>
 
     </div>
+  );
+}
+
+export default function SellNewPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 text-green-500 animate-spin mb-4" />
+        <p className="text-slate-500">Memuat data barang...</p>
+      </div>
+    }>
+      <SellNewContent />
+    </Suspense>
   );
 }

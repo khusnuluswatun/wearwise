@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "../../../lib/prisma";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
@@ -129,6 +130,29 @@ Rules:
       { error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 }
     );
+  }
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Scan ID is required" }, { status: 400 });
+    }
+
+    const scan = await prisma.scan.findUnique({
+      where: { id }
+    });
+
+    if (!scan) {
+      return NextResponse.json({ error: "Scan not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, scan });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Failed to fetch scan" }, { status: 500 });
   }
 }
 
