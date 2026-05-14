@@ -25,37 +25,65 @@ import {
   Cell
 } from "recharts";
 
-// Mock Data
-const reportData = [
-  { name: "Nov 2025", value: 55 },
-  { name: "Dec 2025", value: 58 },
-  { name: "Jan 2026", value: 38 },
-  { name: "Feb 2026", value: 77 },
-  { name: "Mar 2026", value: 45 },
-  { name: "Apr 2026", value: 65 },
-  { name: "May 2026", value: 90 },
+// Default fallback data
+const defaultReportData = [
+  { name: "Nov", value: 0 },
+  { name: "Dec", value: 0 },
+  { name: "Jan", value: 0 },
+  { name: "Feb", value: 0 },
+  { name: "Mar", value: 0 },
+  { name: "Apr", value: 0 },
+  { name: "May", value: 0 },
 ];
 
-const analyticsData = [
-  { name: "Success", value: 80, color: "#3b82f6" },
-  { name: "Pending", value: 15, color: "#fbbf24" },
-  { name: "Rejected", value: 5, color: "#f87171" },
-];
-
-const recentActivity = [
-  { id: "#876364", name: "Jaket", category: "Recycle", categoryColor: "bg-cyan-100 text-cyan-700", place: "Lucy Recycle", status: "Waiting", statusColor: "text-blue-500" },
-  { id: "#876368", name: "Black Sleep Dress", category: "Donation", categoryColor: "bg-green-100 text-green-700", place: "Panti Asuhan Melati", status: "Success", statusColor: "text-green-500" },
-  { id: "#876412", name: "Kemeja", category: "Sell", categoryColor: "bg-orange-100 text-orange-700", place: "Marketplace", status: "Waiting", statusColor: "text-blue-500" },
+const defaultAnalyticsData = [
+  { name: "Success", value: 0, color: "#3b82f6" },
+  { name: "Pending", value: 0, color: "#fbbf24" },
+  { name: "Rejected", value: 0, color: "#f87171" },
 ];
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
+  const [data, setData] = useState<any>({
+    stats: { donations: 0, recycle: 0, upcycle: 0, sold: 0 },
+    analytics: defaultAnalyticsData,
+    recentActivity: [],
+    reportData: defaultReportData,
+    points: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-      setUser(JSON.parse(userStr));
-    }
+    const fetchData = async () => {
+      try {
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+          const parsedUser = JSON.parse(userStr);
+          setUser(parsedUser);
+
+          const res = await fetch(`/api/dashboard?userId=${parsedUser.id}`);
+          if (res.ok) {
+            const result = await res.json();
+            if (result.success) {
+              setData((prev: any) => ({
+                ...prev,
+                stats: result.stats || prev.stats,
+                analytics: result.analytics?.length > 0 ? result.analytics : prev.analytics,
+                recentActivity: result.recentActivity || [],
+                reportData: result.reportData?.length > 0 ? result.reportData : prev.reportData,
+                points: result.points ?? prev.points,
+              }));
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   return (
@@ -77,10 +105,10 @@ export default function Dashboard() {
       {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { title: "Donation", value: "40", icon: Heart, color: "text-blue-500", bg: "bg-blue-100/50" },
-          { title: "Recycle", value: "10kg", icon: Recycle, color: "text-amber-500", bg: "bg-amber-100/50" },
-          { title: "Sold", value: "3", icon: ShoppingBag, color: "text-rose-500", bg: "bg-rose-100/50" },
-          { title: "Upcycle", value: "1", icon: RefreshCcw, color: "text-purple-500", bg: "bg-purple-100/50" },
+          { title: "Donation", value: data.stats.donations.toString(), icon: Heart, color: "text-blue-500", bg: "bg-blue-100/50" },
+          { title: "Recycle", value: `${data.stats.recycle} items`, icon: Recycle, color: "text-amber-500", bg: "bg-amber-100/50" },
+          { title: "Sold", value: data.stats.sold.toString(), icon: ShoppingBag, color: "text-rose-500", bg: "bg-rose-100/50" },
+          { title: "Upcycle", value: data.stats.upcycle.toString(), icon: RefreshCcw, color: "text-purple-500", bg: "bg-purple-100/50" },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-shadow">
             <div className={`w-14 h-14 rounded-full flex items-center justify-center ${stat.bg} ${stat.color}`}>
@@ -108,7 +136,7 @@ export default function Dashboard() {
             </div>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={reportData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart data={data.reportData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
@@ -168,13 +196,13 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {recentActivity.map((item, i) => (
+                  {data.recentActivity.length > 0 ? data.recentActivity.map((item: any, i: number) => (
                     <tr key={i} className="hover:bg-slate-50/50 transition-colors">
                       <td className="py-4 text-sm font-semibold text-slate-600">{item.id}</td>
                       <td className="py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl shadow-inner">
-                            {item.name === "Jaket" ? "🧥" : item.name === "Kemeja" ? "👔" : "👗"}
+                            {item.name?.toLowerCase().includes("jaket") ? "🧥" : item.name?.toLowerCase().includes("kemeja") ? "👔" : "👗"}
                           </div>
                           <span className="text-sm font-bold text-slate-800">{item.name}</span>
                         </div>
@@ -189,7 +217,13 @@ export default function Dashboard() {
                         <span className={item.statusColor}>{item.status}</span>
                       </td>
                     </tr>
-                  ))}
+                  )) : (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-500 font-medium">
+                        No recent activity found
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -207,7 +241,7 @@ export default function Dashboard() {
             <h3 className="text-sm font-bold text-slate-500 mb-4 relative z-10">Your points</h3>
             <div className="flex items-center gap-3 mb-6 relative z-10">
               <Star className="text-amber-400 fill-amber-400 drop-shadow-md" size={36} />
-              <span className="text-5xl font-display font-extrabold text-slate-800">{user?.rewardPoints || 0}</span>
+              <span className="text-5xl font-display font-extrabold text-slate-800">{data.points}</span>
             </div>
             
             <div className="pt-4 border-t border-slate-100 flex items-center gap-2 relative z-10">
@@ -229,7 +263,7 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={analyticsData}
+                    data={data.analytics}
                     cx="50%"
                     cy="50%"
                     innerRadius={70}
@@ -239,24 +273,25 @@ export default function Dashboard() {
                     stroke="none"
                     cornerRadius={8}
                   >
-                    {analyticsData.map((entry, index) => (
+                    {data.analytics.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip 
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
                     itemStyle={{ fontWeight: 'bold' }}
+                    formatter={(value: any) => `${value}%`}
                   />
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-                <span className="text-3xl font-display font-extrabold text-slate-800">80%</span>
-                <span className="text-xs font-semibold text-slate-500">Transactions</span>
+                <span className="text-3xl font-display font-extrabold text-slate-800">{data.analytics.find((a: any) => a.name === "Success")?.value || 0}%</span>
+                <span className="text-xs font-semibold text-slate-500">Success Rate</span>
               </div>
             </div>
 
             <div className="flex justify-center gap-6 mt-4">
-              {analyticsData.map((item, i) => (
+              {data.analytics.map((item: any, i: number) => (
                 <div key={i} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
                   <span className="text-xs font-bold text-slate-600">{item.name}</span>
