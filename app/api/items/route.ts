@@ -99,3 +99,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err.message || "Failed to save item" }, { status: 500 });
   }
 }
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+    
+    const items = await prisma.item.findMany({
+      where: userId ? { userId } : {},
+      include: {
+        user: true,
+      }
+    });
+
+    const scans = await prisma.scan.findMany();
+    const itemsWithImages = items.map(item => {
+      const scan = scans.find(s => s.id === item.scanId);
+      return {
+        ...item,
+        imageUrl: scan?.imageUrl || "/placeholder.png"
+      };
+    });
+
+    return NextResponse.json({ success: true, items: itemsWithImages });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}

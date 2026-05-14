@@ -44,6 +44,11 @@ interface Item {
   userId: string;
   imageUrl: string;
   saleTransactions: SaleTransaction[];
+  scanData?: {
+    result?: string;
+    aiDescription?: string;
+    aiRecommendation?: string;
+  };
 }
 
 export default function MyMarketDetailPage() {
@@ -70,6 +75,7 @@ export default function MyMarketDetailPage() {
   const [soldError, setSoldError] = useState("");
   const [soldSuccess, setSoldSuccess] = useState(false);
   const [userSearch, setUserSearch] = useState("");
+  const [canceling, setCanceling] = useState(false);
 
   const fetchItem = useCallback(async () => {
     const res = await fetch(`/api/items/${id}`);
@@ -158,6 +164,24 @@ export default function MyMarketDetailPage() {
       setSoldError(data.error || "Gagal memproses transaksi.");
     }
     setSubmitting(false);
+  };
+
+  const handleCancelSale = async () => {
+    if (!confirm("Apakah Anda yakin ingin membatalkan penjualan ini? Barang akan dihapus dari pasar.")) return;
+    setCanceling(true);
+    try {
+      const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        router.push("/dashboard/my-market");
+      } else {
+        alert("Gagal membatalkan: " + data.error);
+        setCanceling(false);
+      }
+    } catch (e) {
+      alert("Error membatalkan penjualan");
+      setCanceling(false);
+    }
   };
 
   const filteredUsers = users.filter(
@@ -285,6 +309,45 @@ export default function MyMarketDetailPage() {
             )}
           </div>
 
+          {/* AI Analysis Insights */}
+          {item.scanData?.result && (() => {
+            let resultData: any = {};
+            try {
+              resultData = JSON.parse(item.scanData.result);
+            } catch (e) {}
+            
+            return (
+              <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden group border border-slate-700">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <Star size={80} />
+                </div>
+                
+                <h3 className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-500 mb-4 flex items-center gap-2">
+                  <ShieldCheck size={14} className="text-green-500" /> AI WearWise Analysis
+                </h3>
+                
+                <div className="grid grid-cols-2 gap-3 relative z-10">
+                  <div className="bg-white/5 backdrop-blur-md rounded-2xl p-3 border border-white/5">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase mb-0.5">Fabric</p>
+                    <p className="text-xs font-extrabold truncate">{resultData.fabric || "-"}</p>
+                  </div>
+                  <div className="bg-white/5 backdrop-blur-md rounded-2xl p-3 border border-white/5">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase mb-0.5">Condition</p>
+                    <p className="text-xs font-extrabold text-green-400 truncate">{resultData.condition || "Baik"}</p>
+                  </div>
+                  <div className="bg-white/5 backdrop-blur-md rounded-2xl p-3 border border-white/5">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase mb-0.5">Color</p>
+                    <p className="text-xs font-extrabold truncate">{resultData.color || "-"}</p>
+                  </div>
+                  <div className="bg-white/5 backdrop-blur-md rounded-2xl p-3 border border-white/5">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase mb-0.5">AI Value</p>
+                    <p className="text-xs font-extrabold text-amber-400 truncate">Rp {resultData.sellPrice || "-"}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Transaction info (if pending or sold) */}
           {latestTx && (
             <div className={`rounded-2xl p-4 border flex items-start gap-3 ${
@@ -317,12 +380,23 @@ export default function MyMarketDetailPage() {
 
           {/* Action Button */}
           {item.status === "available" && (
-            <button
-              onClick={openSoldModal}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-extrabold text-base shadow-lg shadow-green-500/30 transition-all hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2"
-            >
-              <CheckCircle size={20} /> Tandai Sudah Terjual
-            </button>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={openSoldModal}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-extrabold text-base shadow-lg shadow-green-500/30 transition-all hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2"
+              >
+                <CheckCircle size={20} /> Tandai Sudah Terjual
+              </button>
+
+              <button
+                onClick={handleCancelSale}
+                disabled={canceling}
+                className="w-full py-3 rounded-2xl bg-white border-2 border-red-100 text-red-500 font-bold text-sm hover:bg-red-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {canceling ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
+                Batalkan Penjualan
+              </button>
+            </div>
           )}
         </div>
       </div>

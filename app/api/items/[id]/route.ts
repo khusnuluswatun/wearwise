@@ -15,7 +15,11 @@ export async function GET(
   const scan = await prisma.scan.findUnique({ where: { id: item.scanId } });
   return NextResponse.json({
     success: true,
-    item: { ...item, imageUrl: scan?.imageUrl || "/placeholder.png" },
+    item: { 
+      ...item, 
+      imageUrl: scan?.imageUrl || "/placeholder.png",
+      scanData: scan 
+    },
   });
 }
 
@@ -40,6 +44,20 @@ export async function PATCH(
     });
 
     return NextResponse.json({ success: true, item: updated });
+  } catch (err: any) {
+    console.error(err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    await prisma.item.delete({ where: { id } });
+    return NextResponse.json({ success: true, message: "Item deleted successfully" });
   } catch (err: any) {
     console.error(err);
     return NextResponse.json({ error: err.message }, { status: 500 });

@@ -67,8 +67,14 @@ function SellNewContent() {
               image: scan.imageUrl,
               fileName: "scan.jpg"
             };
-            setItemsData(prev => [...prev, newItem]);
-            setDraftList(prev => [...prev, { ...newItem, condition: resultData.condition, fabric: resultData.fabric, color: resultData.color }]);
+            setItemsData(prev => {
+              if (prev.some(i => i.id === scan.id)) return prev;
+              return [...prev, newItem];
+            });
+            setDraftList(prev => {
+              if (prev.some(i => i.id === scan.id)) return prev;
+              return [...prev, { ...newItem, condition: resultData.condition, fabric: resultData.fabric, color: resultData.color }];
+            });
           }
         } catch (err) {
           console.error("Failed to fetch scan details:", err);
@@ -109,6 +115,12 @@ function SellNewContent() {
   };
 
   const handleRemoveItem = (index: number) => {
+    const itemId = itemsData[index]?.id;
+    if (itemId) {
+      // Also delete from database so it doesn't show up in dashboard "Pending"
+      fetch(`/api/scan?id=${itemId}`, { method: "DELETE" }).catch(err => console.error("Failed to delete scan from DB:", err));
+    }
+
     const newItems = [...itemsData];
     newItems.splice(index, 1);
     setItemsData(newItems);

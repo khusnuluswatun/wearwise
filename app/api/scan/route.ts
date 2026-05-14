@@ -156,3 +156,21 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Scan ID is required" }, { status: 400 });
+    }
+
+    await prisma.scan.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ success: true, message: "Scan deleted successfully" });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Failed to delete scan" }, { status: 500 });
+  }
+}
