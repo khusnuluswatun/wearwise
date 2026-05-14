@@ -64,18 +64,16 @@ Rules:
     while (attempts < maxAttempts) {
       try {
         attempts++;
-        result = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: [
-            prompt,
-            {
-              inlineData: {
-                mimeType,
-                data: base64,
-              },
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        result = await model.generateContent([
+          prompt,
+          {
+            inlineData: {
+              mimeType,
+              data: base64,
             },
-          ]
-        });
+          },
+        ]);
         break; // Success!
       } catch (err: any) {
         const isRetryable = err.message?.includes("503") || err.message?.includes("Service Unavailable") || err.message?.includes("overloaded");
@@ -90,7 +88,7 @@ Rules:
 
     if (!result) throw new Error("Failed to get response from AI after retries");
 
-    const text = result.text?.trim() ?? "";
+    const text = result.response.text().trim();
 
     // Clean up any markdown wrappers if present
     const cleaned = text.replace(/^```json\s*/i, "").replace(/\s*```$/i, "").trim();
