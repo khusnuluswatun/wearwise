@@ -11,7 +11,8 @@ import {
   ChevronDown,
   Star,
   TrendingUp,
-  MoreHorizontal
+  MoreHorizontal,
+  ScanLine
 } from "lucide-react";
 import {
   AreaChart,
@@ -51,22 +52,30 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const userStr = localStorage.getItem("user") || localStorage.getItem("partner_user");
+      try {
+        const userStr = localStorage.getItem("user") || localStorage.getItem("partner_user");
 
-      if (userStr) {
-        const parsedUser = JSON.parse(userStr);
-        setUser(parsedUser);
+        if (userStr) {
+          const parsedUser = JSON.parse(userStr);
+          setUser(parsedUser);
 
-        // Redirect based on role if they are in the wrong dashboard area
-        if (parsedUser.role === "partner") {
-          router.replace("/partner/dashboard");
-          return;
+          // Redirect based on role if they are in the wrong dashboard area
+          if (parsedUser.role === "partner") {
+            router.replace("/partner/dashboard");
+            return; // We are redirecting, but maybe we should still clear loading?
+          }
+          await fetchDashboardData(parsedUser.id);
+        } else {
+          router.push("/login");
+          setLoading(false);
         }
-        fetchDashboardData(parsedUser.id);
-      } else {
-        router.push("/login");
+      } catch (err) {
+        console.error("Error in fetchData:", err);
+        setLoading(false);
       }
-    }
+    };
+
+    fetchData();
   }, [router]);
 
   const fetchDashboardData = async (userId: string) => {
@@ -76,11 +85,12 @@ export default function Dashboard() {
       if (result.success) {
         setDashboardData((prev: any) => ({
           ...prev,
-          stats: result.stats || prev.stats,
-          analytics: result.analytics?.length > 0 ? result.analytics : prev.analytics,
-          recentActivity: result.recentActivity || [],
-          reportData: result.reportData?.length > 0 ? result.reportData : prev.reportData,
-          points: result.points ?? prev.points,
+          stats: result.data?.stats || prev?.stats || {},
+          analytics: result.data?.analytics?.length > 0 ? result.data.analytics : prev?.analytics || [],
+          recentActivity: result.data?.recentActivity || [],
+          reportData: result.data?.reportData?.length > 0 ? result.data.reportData : prev?.reportData || [],
+          points: result.data?.rewardPoints ?? prev?.points ?? 0,
+          totalTransactions: result.data?.totalTransactions || prev?.totalTransactions || 0,
         }));
       }
     } catch (err) {
@@ -99,10 +109,10 @@ export default function Dashboard() {
   }
 
   const stats = [
-    { title: "Donation", value: dashboardData?.stats.donation || "0", icon: Heart, color: "text-blue-500", bg: "bg-blue-100/50" },
-    { title: "Recycle", value: dashboardData?.stats.recycle + "kg" || "0kg", icon: Recycle, color: "text-amber-500", bg: "bg-amber-100/50" },
-    { title: "Sold", value: dashboardData?.stats.sell || "0", icon: ShoppingBag, color: "text-rose-500", bg: "bg-rose-100/50" },
-    { title: "Upcycle", value: dashboardData?.stats.upcycle || "0", icon: RefreshCcw, color: "text-purple-500", bg: "bg-purple-100/50" },
+    { title: "Donation", value: dashboardData?.stats?.donation || "0", icon: Heart, color: "text-blue-500", bg: "bg-blue-100/50" },
+    { title: "Recycle", value: (dashboardData?.stats?.recycle ? dashboardData.stats.recycle + "kg" : "0kg"), icon: Recycle, color: "text-amber-500", bg: "bg-amber-100/50" },
+    { title: "Sold", value: dashboardData?.stats?.sell || "0", icon: ShoppingBag, color: "text-rose-500", bg: "bg-rose-100/50" },
+    { title: "Upcycle", value: dashboardData?.stats?.upcycle || "0", icon: RefreshCcw, color: "text-purple-500", bg: "bg-purple-100/50" },
   ];
 
   const getCategoryStyles = (category: string) => {
@@ -146,34 +156,43 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 py-4 px-4 lg:px-8 max-w-7xl mx-auto">
 
-      {/* Header - Compact */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h1 className="text-2xl font-display font-extrabold text-slate-800 tracking-tight">Dashboard</h1>
-        <div className="flex items-center gap-3">
-          <button
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-emerald-500 to-teal-700 rounded-[2rem] p-8 md:p-10 text-white shadow-xl shadow-teal-900/10 relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+        <div className="absolute top-0 right-0 -mt-16 -mr-16 w-80 h-80 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 -mb-16 -ml-16 w-64 h-64 bg-emerald-300 opacity-20 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div className="relative z-10">
+          <h1 className="text-3xl md:text-4xl font-display font-extrabold mb-3 tracking-tight">
+            Welcome back, {user?.name?.split(' ')[0] || "Eco-warrior"}! 👋
+          </h1>
+          <p className="text-emerald-50 max-w-lg text-sm md:text-base font-medium leading-relaxed">
+            Here's what's happening with your circular fashion journey today. Every action brings us closer to a greener planet!
+          </p>
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-3 relative z-10">
+          <button 
+            onClick={() => router.push('/dashboard/scan')} 
+            className="bg-white text-teal-700 px-6 py-3 rounded-2xl font-extrabold text-sm shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2"
+          >
+            <ScanLine size={18} strokeWidth={2.5} /> Scan New Item
+          </button>
+          <button 
             onClick={() => {
               setLoading(true);
               fetchDashboardData(user?.id);
-            }}
-            className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-green-600 transition-all shadow-sm group"
+            }} 
+            className="bg-teal-800/30 hover:bg-teal-800/50 text-white p-3 rounded-2xl backdrop-blur-md transition-all shadow-sm border border-teal-400/20"
             title="Refresh data"
           >
-            <RefreshCcw size={16} className={`${loading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
-          </button>
-          <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 shadow-sm">
-            {new Date().toLocaleDateString()} <ChevronDown size={14} />
+            <RefreshCcw size={18} className={loading ? 'animate-spin' : ''} strokeWidth={2.5} />
           </button>
         </div>
       </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { title: "Donation", value: "40", icon: Heart, color: "text-blue-500", bg: "bg-blue-100/50" },
-          { title: "Recycle", value: "10kg", icon: Recycle, color: "text-amber-500", bg: "bg-amber-100/50" },
-          { title: "Sold", value: "3", icon: ShoppingBag, color: "text-rose-500", bg: "bg-rose-100/50" },
-          { title: "Upcycle", value: "1", icon: RefreshCcw, color: "text-purple-500", bg: "bg-purple-100/50" },
-        ].map((stat, i) => (
+        {stats.map((stat, i) => (
           <div key={i} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-shadow">
             <div className={`w-14 h-14 rounded-full flex items-center justify-center ${stat.bg} ${stat.color}`}>
               <stat.icon size={24} strokeWidth={2.5} />
@@ -189,14 +208,41 @@ export default function Dashboard() {
       {/* Main Grid - Optimized */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* Reports Chart - Compact Height */}
-        <div className="lg:col-span-2">
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 h-full">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-base font-bold text-slate-800">Growth Reports</h2>
-              <button className="text-slate-400 hover:text-slate-600"><MoreHorizontal size={18} /></button>
+        {/* Reports Chart - Enhanced & Flexible Height */}
+        <div className="lg:col-span-2 flex flex-col">
+          <div className="bg-white p-6 lg:p-8 rounded-3xl shadow-sm border border-slate-100 flex-1 flex flex-col relative overflow-hidden group">
+            {/* Background Glow */}
+            <div className="absolute -left-20 -top-20 w-64 h-64 bg-gradient-to-br from-purple-100/50 to-blue-50/50 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
+
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 relative z-10">
+              <div>
+                <h2 className="text-xl font-display font-extrabold text-slate-800">Growth & Impact</h2>
+                <p className="text-sm font-medium text-slate-500 mt-1">Platform activity over the last 7 months</p>
+              </div>
+              <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/60 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span className="text-xs font-bold text-slate-600 tracking-wide uppercase">Live Sync</span>
+              </div>
             </div>
-            <div className="h-[240px] w-full">
+
+            {/* Quick Metrics */}
+            <div className="flex gap-8 mb-8 relative z-10">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Total Actions</span>
+                <span className="text-4xl font-display font-extrabold text-slate-800 tracking-tight">{dashboardData?.totalTransactions || 0}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Est. Growth</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-3xl font-display font-extrabold text-green-500">+12%</span>
+                  <div className="bg-green-100 text-green-600 p-1.5 rounded-lg">
+                    <TrendingUp size={16} strokeWidth={3} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 w-full min-h-[250px] relative z-10">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={dashboardData?.reportData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
@@ -215,81 +261,34 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Recent Activity Table */}
-          <div className="bg-white p-6 lg:p-8 rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-slate-800">Recent Activity</h2>
-              <div className="flex gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px]">
-                <thead>
-                  <tr className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                    <th className="pb-4 font-semibold">Item no</th>
-                    <th className="pb-4 font-semibold">Apparel Name</th>
-                    <th className="pb-4 font-semibold">Categories</th>
-                    <th className="pb-4 font-semibold">Place</th>
-                    <th className="pb-4 font-semibold">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {dashboardData.recentActivity.length > 0 ? dashboardData.recentActivity.map((item: any, i: number) => (
-                    <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="py-4 text-sm font-semibold text-slate-600">{item.id}</td>
-                      <td className="py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl shadow-inner">
-                            {item.name === "Jaket" ? "🧥" : item.name === "Kemeja" ? "👔" : "👗"}
-                          </div>
-                          <span className="text-sm font-bold text-slate-800">{item.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-4">
-                        <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${item.categoryColor}`}>
-                          {item.category}
-                        </span>
-                      </td>
-                      <td className="py-4 text-sm font-medium text-slate-600">{item.place}</td>
-                      <td className="py-4 text-sm font-bold">
-                        <span className={item.statusColor}>{item.status}</span>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-500 font-medium">
-                        No recent activity found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
 
         </div>
 
         {/* Right Column - Stacked Small Cards */}
         <div className="flex flex-col gap-6">
           {/* Points Card */}
-          <div className="bg-white p-6 lg:p-8 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="bg-white p-6 lg:p-8 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all flex flex-col justify-between h-full">
             <div className="absolute -right-6 -top-6 w-32 h-32 bg-gradient-to-br from-yellow-100 to-amber-50 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
 
-            <h3 className="text-sm font-bold text-slate-500 mb-4 relative z-10">Your points</h3>
-            <div className="flex items-center gap-3 mb-6 relative z-10">
-              <Star className="text-amber-400 fill-amber-400 drop-shadow-md" size={36} />
-              <span className="text-5xl font-display font-extrabold text-slate-800">{user?.rewardPoints || 0}</span>
+            <div className="relative z-10">
+              <h3 className="text-sm font-bold text-slate-500 mb-4 uppercase tracking-widest">Your Points</h3>
+              <div className="flex items-center gap-3 mb-6">
+                <Star className="text-amber-400 fill-amber-400 drop-shadow-md" size={36} />
+                <span className="text-5xl font-display font-extrabold text-slate-800 tracking-tight">{dashboardData?.points || 0}</span>
+              </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-100 flex items-center gap-2 relative z-10">
-              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600">
-                <TrendingUp size={14} strokeWidth={3} />
+            <div className="relative z-10 w-full mt-auto pt-4 border-t border-slate-100">
+              <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">
+                <span className="text-amber-500">Bronze</span>
+                <span>Silver (1000)</span>
               </div>
-              <span className="text-sm font-bold text-slate-700">+2 <span className="text-slate-400 font-medium">activity/week</span></span>
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden shadow-inner">
+                <div 
+                  className="bg-gradient-to-r from-amber-400 to-orange-400 h-full rounded-full transition-all duration-1000 ease-out" 
+                  style={{ width: `${Math.min(100, ((dashboardData?.points || 0) / 1000) * 100)}%` }}
+                ></div>
+              </div>
             </div>
           </div>
 
@@ -300,7 +299,7 @@ export default function Dashboard() {
               <button className="text-slate-400 hover:text-slate-600"><MoreHorizontal size={16} /></button>
             </div>
 
-            <div className="relative h-[130px] flex items-center justify-center">
+            <div className="relative h-[220px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -364,7 +363,7 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {dashboardData?.recentActivity.map((item: any, i: number) => (
+              {dashboardData?.recentActivity?.map((item: any, i: number) => (
                 <tr
                   key={i}
                   className={`group transition-colors ${item.link ? "cursor-pointer hover:bg-slate-50/80" : ""}`}
@@ -408,7 +407,7 @@ export default function Dashboard() {
                   </td>
                 </tr>
               ))}
-              {dashboardData?.recentActivity.length === 0 && (
+              {(!dashboardData?.recentActivity || dashboardData.recentActivity.length === 0) && (
                 <tr>
                   <td colSpan={5} className="py-12 text-center">
                     <div className="flex flex-col items-center gap-2 opacity-20">
