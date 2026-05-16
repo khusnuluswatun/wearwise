@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
-import fs from "fs";
-import path from "path";
-import crypto from "crypto";
+import { uploadToSupabase } from "../../../lib/supabase";
 
 export async function POST(req: Request) {
   try {
@@ -33,10 +31,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "At least one item is required" }, { status: 400 });
     }
 
-    // Ensure uploads directory exists
-    const uploadDir = path.join(process.cwd(), "public/uploads");
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
     const createdTransactions = [];
 
     for (let i = 0; i < items.length; i++) {
@@ -45,6 +39,7 @@ export async function POST(req: Request) {
       const imageFile = imageFiles[i];
 
       let imageUrl = "";
+      let resolvedScanId = scanId;
 
       if (scanId) {
         const existingScan = await prisma.scan.findUnique({ where: { id: scanId } });
@@ -57,27 +52,25 @@ export async function POST(req: Request) {
         }
       }
 
+      // If no existing scan or scan not found, upload to Supabase Storage
       if (!imageUrl && imageFile) {
-        const buffer = Buffer.from(await imageFile.arrayBuffer());
-        const fileName = `${crypto.randomUUID()}-${(item.fileName || "item.jpg").replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-        fs.writeFileSync(path.join(uploadDir, fileName), buffer);
-        imageUrl = `/uploads/${fileName}`;
+        imageUrl = await uploadToSupabase(imageFile, "upcycles");
 
-        const scan = await prisma.scan.create({
+        const newScan = await prisma.scan.create({
           data: { userId, imageUrl, userChoice: userChoiceFormatted, aiRecommendation: userChoiceFormatted },
         });
-        // item.scanId = scan.id; // not used since loop continues
+        resolvedScanId = newScan.id;
       }
 
       // Create Item
       const newItem = await prisma.item.create({
-        data: { 
-          userId, 
-          scanId: scanId || "", 
-          title: item.title, 
-          description: item.description, 
-          price: price, 
-          status: itemStatus 
+        data: {
+          userId,
+          scanId: resolvedScanId || "",
+          title: item.title,
+          description: item.description,
+          price: price,
+          status: itemStatus
         },
       });
 
@@ -90,7 +83,7 @@ export async function POST(req: Request) {
           userId,
           partnerId,
           itemId: newItem.id,
-          scanId: scanId || "manual-entry",
+          scanId: resolvedScanId || "manual-entry",
           type: type,
           status: "pending",
           deliveryMethod,
@@ -110,7 +103,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, transactions: createdTransactions }, { status: 201 });
   } catch (err: any) {
     console.error("Upcycle submit error:", err);
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: err.message || "Failed to submit upcycle request",
       details: err.stack
     }, { status: 500 });

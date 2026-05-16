@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
-import fs from "fs";
-import path from "path";
-import crypto from "crypto";
+import { uploadToSupabase } from "../../../lib/supabase";
 
 export async function POST(req: Request) {
   try {
@@ -14,9 +12,9 @@ export async function POST(req: Request) {
     const priceStr = formData.get("price") as string;
     const price = parseInt(priceStr.replace(/[^0-9]/g, "")) || 0; // strip non-numeric
     const address = formData.get("address") as string;
-    
+
     const file = formData.get("image") as File;
-    
+
     if (!userId || !title || !price) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
@@ -45,17 +43,8 @@ export async function POST(req: Request) {
     }
 
     if (!imageUrl && file) {
-      // Save image locally
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const uploadDir = path.join(process.cwd(), "public/uploads");
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      const fileName = `${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-      const filePath = path.join(uploadDir, fileName);
-      fs.writeFileSync(filePath, buffer);
-      
-      imageUrl = `/uploads/${fileName}`;
+      // Upload image to Supabase Storage
+      imageUrl = await uploadToSupabase(file, "items");
 
       // Create Scan record
       const scan = await prisma.scan.create({
@@ -104,7 +93,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
-    
+
     const items = await prisma.item.findMany({
       where: userId ? { userId } : {},
       include: {

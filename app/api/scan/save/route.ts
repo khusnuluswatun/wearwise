@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import fs from "fs";
-import path from "path";
-import crypto from "crypto";
+import { uploadToSupabase } from "@/lib/supabase";
 
 export async function POST(req: Request) {
   try {
@@ -18,15 +16,7 @@ export async function POST(req: Request) {
 
     let imageUrl = "";
     if (imageFile) {
-      const buffer = Buffer.from(await imageFile.arrayBuffer());
-      const uploadDir = path.join(process.cwd(), "public/uploads");
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      const fileName = `${crypto.randomUUID()}-${imageFile.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-      const filePath = path.join(uploadDir, fileName);
-      fs.writeFileSync(filePath, buffer);
-      imageUrl = `/uploads/${fileName}`;
+      imageUrl = await uploadToSupabase(imageFile, "scans");
     }
 
     // 1. Create Scan record

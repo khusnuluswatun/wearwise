@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import fs from "fs";
-import path from "path";
-import crypto from "crypto";
+import { uploadToSupabase } from "@/lib/supabase";
 
 export async function POST(req: Request) {
   try {
@@ -22,16 +20,8 @@ export async function POST(req: Request) {
     if (item.userId !== sellerId)
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
-    // Save proof image
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const uploadDir = path.join(process.cwd(), "public/uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    const fileName = `proof-${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-    const filePath = path.join(uploadDir, fileName);
-    fs.writeFileSync(filePath, buffer);
-    const proofImageUrl = `/uploads/${fileName}`;
+    // Upload proof image to Supabase Storage
+    const proofImageUrl = await uploadToSupabase(file, "proofs");
 
     // Create sale transaction (status: pending_verification)
     const transaction = await prisma.saleTransaction.create({
