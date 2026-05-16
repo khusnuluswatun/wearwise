@@ -121,19 +121,31 @@ export async function GET(req: Request) {
         ]
       },
       include: {
-        user: true,
+        user: { select: { name: true, phone: true, address: true } },
       },
       orderBy: {
         createdAt: 'desc'
       }
     });
 
+    // Fetch all related transactions to find notes/rejection reasons
+    const itemIds = items.map(i => i.id);
+    const transactions = await prisma.transaction.findMany({
+      where: { itemId: { in: itemIds } },
+      include: { partner: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
+
     const scans = await prisma.scan.findMany();
     const itemsWithImages = items.map(item => {
       const scan = scans.find(s => s.id === item.scanId);
+      // Get the latest transaction for this item
+      const latestTx = transactions.find(t => t.itemId === item.id);
+
       return {
         ...item,
-        imageUrl: scan?.imageUrl || "/placeholder.png"
+        imageUrl: scan?.imageUrl || "/placeholder.png",
+        latestTransaction: latestTx || null
       };
     });
 

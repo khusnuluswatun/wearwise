@@ -16,6 +16,9 @@ import {
   ShieldCheck,
   Clock,
   AlertTriangle,
+  HeartHandshake,
+  Scissors,
+  Package,
 } from "lucide-react";
 
 interface User {
@@ -377,16 +380,84 @@ export default function MyMarketDetailPage() {
               </div>
             </div>
           )}
-
           {/* Action Button */}
           {item.status === "available" ? (
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={openSoldModal}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-extrabold text-base shadow-lg shadow-green-500/30 transition-all hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2"
-              >
-                <CheckCircle size={20} /> Tandai Sudah Terjual
-              </button>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-3">
+                <button
+                  onClick={openSoldModal}
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-extrabold text-base shadow-lg shadow-green-500/30 transition-all hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <CheckCircle size={20} /> Tandai Sudah Terjual
+                </button>
+              </div>
+
+              {/* NEW ACTIONS SECTION */}
+              <div className="pt-6 border-t border-slate-100">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Ganti Metode atau Donasi Ulang</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <button
+                    onClick={() => {
+                      const resultData = item.scanData?.result ? JSON.parse(item.scanData.result) : {};
+                      const draft = [{
+                        id: item.scanId, 
+                        title: item.title,
+                        condition: resultData.condition || "Baik",
+                        fabric: resultData.fabric || "Katun",
+                        color: resultData.color || "Sesuai Foto",
+                        image: item.imageUrl,
+                        fileName: "item.jpg"
+                      }];
+                      localStorage.setItem("wearwise_donate_draft_list", JSON.stringify(draft));
+                      router.push("/dashboard/donate/new");
+                    }}
+                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-blue-50 border-2 border-blue-100 text-blue-600 hover:bg-blue-100 transition-all group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                      <HeartHandshake size={20} />
+                    </div>
+                    <span className="text-xs font-extrabold">Donasi</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const draft = [{
+                        id: item.scanId,
+                        title: item.title,
+                        image: item.imageUrl,
+                        condition: "Baik"
+                      }];
+                      localStorage.setItem("wearwise_upcycle_draft_list", JSON.stringify(draft));
+                      router.push("/dashboard/upcycle/new");
+                    }}
+                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-purple-50 border-2 border-purple-100 text-purple-600 hover:bg-purple-100 transition-all group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                      <Scissors size={20} />
+                    </div>
+                    <span className="text-xs font-extrabold">Upcycle</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const draft = [{
+                        id: item.scanId,
+                        title: item.title,
+                        image: item.imageUrl,
+                        condition: "Baik"
+                      }];
+                      localStorage.setItem("wearwise_recycle_draft_list", JSON.stringify(draft));
+                      router.push("/dashboard/recycle/new");
+                    }}
+                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-100 text-emerald-600 hover:bg-emerald-100 transition-all group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                      <Package size={20} />
+                    </div>
+                    <span className="text-xs font-extrabold">Recycle</span>
+                  </button>
+                </div>
+              </div>
 
               <button
                 onClick={handleCancelSale}
@@ -394,21 +465,18 @@ export default function MyMarketDetailPage() {
                 className="w-full py-3 rounded-2xl bg-white border-2 border-red-100 text-red-500 font-bold text-sm hover:bg-red-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {canceling ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
-                Batalkan Penjualan
+                Hapus dari Lemari
               </button>
             </div>
-          ) : item.status.includes("_pending") || item.status.includes("_in_progress") ? (
+          ) : item.status.includes("_pending") || item.status.includes("_in_progress") || item.status === "donated" ? (
             <div className="bg-slate-50 border border-slate-100 p-8 rounded-3xl flex flex-col items-center text-center shadow-inner">
               <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md mb-4">
                 <Clock className="text-amber-500 animate-pulse" size={28} />
               </div>
               <h4 className="text-sm font-extrabold text-slate-800 mb-2 uppercase tracking-tight">Status: Sedang Diproses</h4>
               <p className="text-[11px] font-medium text-slate-500 max-w-[240px] leading-relaxed">
-                Pakaianmu sedang dalam penanganan mitra UMKM kami. Fitur tindakan dinonaktifkan sampai proses selesai.
+                Pakaianmu sedang dalam penanganan mitra kami. Fitur tindakan dinonaktifkan sampai proses selesai.
               </p>
-              <div className="mt-6 px-4 py-2 bg-amber-100 rounded-xl">
-                 <span className="text-[10px] font-bold text-amber-700">Estimasi Selesai: 3-5 Hari</span>
-              </div>
             </div>
           ) : null}
         </div>
