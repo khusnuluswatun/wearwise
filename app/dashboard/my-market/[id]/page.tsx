@@ -379,7 +379,7 @@ export default function MyMarketDetailPage() {
           )}
 
           {/* Action Button */}
-          {item.status === "available" && (
+          {item.status === "available" ? (
             <div className="flex flex-col gap-3">
               <button
                 onClick={openSoldModal}
@@ -397,7 +397,20 @@ export default function MyMarketDetailPage() {
                 Batalkan Penjualan
               </button>
             </div>
-          )}
+          ) : item.status.includes("_pending") || item.status.includes("_in_progress") ? (
+            <div className="bg-slate-50 border border-slate-100 p-8 rounded-3xl flex flex-col items-center text-center shadow-inner">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md mb-4">
+                <Clock className="text-amber-500 animate-pulse" size={28} />
+              </div>
+              <h4 className="text-sm font-extrabold text-slate-800 mb-2 uppercase tracking-tight">Status: Sedang Diproses</h4>
+              <p className="text-[11px] font-medium text-slate-500 max-w-[240px] leading-relaxed">
+                Pakaianmu sedang dalam penanganan mitra UMKM kami. Fitur tindakan dinonaktifkan sampai proses selesai.
+              </p>
+              <div className="mt-6 px-4 py-2 bg-amber-100 rounded-xl">
+                 <span className="text-[10px] font-bold text-amber-700">Estimasi Selesai: 3-5 Hari</span>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 

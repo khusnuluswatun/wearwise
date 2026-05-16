@@ -105,10 +105,26 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
     
+    if (!userId) {
+      return NextResponse.json({ success: true, items: [] });
+    }
+
     const items = await prisma.item.findMany({
-      where: userId ? { userId } : {},
+      where: {
+        OR: [
+          { userId },
+          {
+            saleTransactions: {
+              some: { buyerId: userId }
+            }
+          }
+        ]
+      },
       include: {
         user: true,
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     });
 

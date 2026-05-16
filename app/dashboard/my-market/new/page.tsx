@@ -161,7 +161,8 @@ function SellNewContent() {
         const file = dataURLtoFile(itemData.image, itemData.fileName || "item.jpg");
         
         const payload = new FormData();
-        payload.append("userId", user?.id || "dummy-user-id");
+        if (!user?.id) throw new Error("Sesi login berakhir. Silakan login kembali.");
+        payload.append("userId", user.id);
         payload.append("scanId", itemData.id); // This is the scanId from localStorage
         payload.append("title", itemData.title);
         payload.append("description", itemData.description);

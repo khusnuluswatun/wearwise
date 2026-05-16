@@ -51,7 +51,7 @@ export default function DashboardLayout({
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, badge: 0 },
       { name: "Scan", href: "/dashboard/scan", icon: ScanLine, badge: 0 },
       { name: "Market", href: "/dashboard/market", icon: ShoppingBag, badge: 0 },
-      { name: "My Market", href: "/dashboard/my-market", icon: Store, badge: 0 },
+      { name: "My Wardrobe", href: "/dashboard/my-market", icon: Scissors, badge: 0 },
       { name: "Notifikasi", href: "/dashboard/notifications", icon: Bell, badge: notifCount }
     ];
 

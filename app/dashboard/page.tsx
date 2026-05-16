@@ -12,7 +12,8 @@ import {
   Star,
   TrendingUp,
   MoreHorizontal,
-  ScanLine
+  ScanLine,
+  Store
 } from "lucide-react";
 import {
   AreaChart,
@@ -91,6 +92,8 @@ export default function Dashboard() {
           reportData: result.data?.reportData?.length > 0 ? result.data.reportData : prev?.reportData || [],
           points: result.data?.rewardPoints ?? prev?.points ?? 0,
           totalTransactions: result.data?.totalTransactions || prev?.totalTransactions || 0,
+          growth: result.data?.growth ?? 0,
+          successRate: result.data?.successRate ?? 0,
         }));
       }
     } catch (err) {
@@ -111,6 +114,7 @@ export default function Dashboard() {
   const stats = [
     { title: "Donation", value: dashboardData?.stats?.donation || "0", icon: Heart, color: "text-blue-500", bg: "bg-blue-100/50" },
     { title: "Recycle", value: (dashboardData?.stats?.recycle ? dashboardData.stats.recycle + "kg" : "0kg"), icon: Recycle, color: "text-amber-500", bg: "bg-amber-100/50" },
+    { title: "Di Market", value: dashboardData?.stats?.inMarket || "0", icon: Store, color: "text-emerald-500", bg: "bg-emerald-100/50" },
     { title: "Sold", value: dashboardData?.stats?.sell || "0", icon: ShoppingBag, color: "text-rose-500", bg: "bg-rose-100/50" },
     { title: "Upcycle", value: dashboardData?.stats?.upcycle || "0", icon: RefreshCcw, color: "text-purple-500", bg: "bg-purple-100/50" },
   ];
@@ -191,9 +195,9 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
         {stats.map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-shadow">
+          <div key={i} className="bg-white p-4 lg:p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className={`w-14 h-14 rounded-full flex items-center justify-center ${stat.bg} ${stat.color}`}>
               <stat.icon size={24} strokeWidth={2.5} />
             </div>
@@ -234,9 +238,11 @@ export default function Dashboard() {
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Est. Growth</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-3xl font-display font-extrabold text-green-500">+12%</span>
-                  <div className="bg-green-100 text-green-600 p-1.5 rounded-lg">
-                    <TrendingUp size={16} strokeWidth={3} />
+                  <span className={`text-3xl font-display font-extrabold ${dashboardData?.growth >= 0 ? "text-green-500" : "text-rose-500"}`}>
+                    {dashboardData?.growth >= 0 ? "+" : ""}{dashboardData?.growth || 0}%
+                  </span>
+                  <div className={`${dashboardData?.growth >= 0 ? "bg-green-100 text-green-600" : "bg-rose-100 text-rose-600"} p-1.5 rounded-lg`}>
+                    <TrendingUp size={16} strokeWidth={3} className={dashboardData?.growth < 0 ? "rotate-180" : ""} />
                   </div>
                 </div>
               </div>
@@ -324,7 +330,7 @@ export default function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-                <span className="text-3xl font-display font-extrabold text-slate-800">{dashboardData?.analytics?.find((a: any) => a.name === "Success")?.value || 0}%</span>
+                <span className="text-3xl font-display font-extrabold text-slate-800">{dashboardData?.successRate || 0}%</span>
                 <span className="text-xs font-semibold text-slate-500">Success Rate</span>
               </div>
             </div>
