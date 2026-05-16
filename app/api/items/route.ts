@@ -145,7 +145,8 @@ export async function GET(req: Request) {
       return {
         ...item,
         imageUrl: scan?.imageUrl || "/placeholder.png",
-        latestTransaction: latestTx || null
+        latestTransaction: latestTx || null,
+        scan: scan || null
       };
     });
 

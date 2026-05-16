@@ -164,7 +164,7 @@ export default function Dashboard() {
       <div className="bg-gradient-to-r from-emerald-500 to-teal-700 rounded-[2rem] p-8 md:p-10 text-white shadow-xl shadow-teal-900/10 relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div className="absolute top-0 right-0 -mt-16 -mr-16 w-80 h-80 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 -mb-16 -ml-16 w-64 h-64 bg-emerald-300 opacity-20 rounded-full blur-3xl pointer-events-none"></div>
-        
+
         <div className="relative z-10">
           <h1 className="text-3xl md:text-4xl font-display font-extrabold mb-3 tracking-tight">
             Welcome back, {user?.name?.split(' ')[0] || "Eco-warrior"}! 👋
@@ -173,19 +173,19 @@ export default function Dashboard() {
             Here's what's happening with your circular fashion journey today. Every action brings us closer to a greener planet!
           </p>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-3 relative z-10">
-          <button 
-            onClick={() => router.push('/dashboard/scan')} 
+          <button
+            onClick={() => router.push('/dashboard/scan')}
             className="bg-white text-teal-700 px-6 py-3 rounded-2xl font-extrabold text-sm shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2"
           >
             <ScanLine size={18} strokeWidth={2.5} /> Scan New Item
           </button>
-          <button 
+          <button
             onClick={() => {
               setLoading(true);
               fetchDashboardData(user?.id);
-            }} 
+            }}
             className="bg-teal-800/30 hover:bg-teal-800/50 text-white p-3 rounded-2xl backdrop-blur-md transition-all shadow-sm border border-teal-400/20"
             title="Refresh data"
           >
@@ -290,8 +290,8 @@ export default function Dashboard() {
                 <span>Silver (1000)</span>
               </div>
               <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden shadow-inner">
-                <div 
-                  className="bg-gradient-to-r from-amber-400 to-orange-400 h-full rounded-full transition-all duration-1000 ease-out" 
+                <div
+                  className="bg-gradient-to-r from-amber-400 to-orange-400 h-full rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${Math.min(100, ((dashboardData?.points || 0) / 1000) * 100)}%` }}
                 ></div>
               </div>

@@ -92,8 +92,8 @@ export default function DashboardLayout({
         <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const isDashboardItem = item.href === "/dashboard" || item.href === "/partner/dashboard";
-            const isActive = isDashboardItem 
-              ? pathname === item.href 
+            const isActive = isDashboardItem
+              ? pathname === item.href
               : pathname === item.href || pathname.startsWith(item.href + "/");
             const Icon = item.icon;
             return (

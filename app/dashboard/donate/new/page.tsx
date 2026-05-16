@@ -27,7 +27,7 @@ export default function DonateNewPage() {
     if (listStr) {
       const parsedList = JSON.parse(listStr);
       setDraftList(parsedList);
-      
+
       const initialItems = parsedList.map((draft: any) => ({
         id: draft.id,
         title: draft.title || "",
@@ -42,7 +42,7 @@ export default function DonateNewPage() {
     if (userStr) {
       const parsedUser = JSON.parse(userStr);
       setUser(parsedUser);
-      
+
       if (parsedUser.address) {
         setAddress(parsedUser.address);
       }
@@ -68,12 +68,12 @@ export default function DonateNewPage() {
     const newItems = [...itemsData];
     newItems.splice(index, 1);
     setItemsData(newItems);
-    
+
     const newDraftList = [...draftList];
     newDraftList.splice(index, 1);
     setDraftList(newDraftList);
     localStorage.setItem("wearwise_donate_draft_list", JSON.stringify(newDraftList));
-    
+
     if (newItems.length === 0) {
       router.push("/dashboard/scan");
     }
@@ -176,11 +176,11 @@ export default function DonateNewPage() {
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 px-4">
       <div className="flex items-center justify-between mb-4 pt-4">
-        <button 
+        <button
           onClick={() => {
             if (step === 1) router.push("/dashboard/scan");
             else setStep((step - 1) as any);
-          }} 
+          }}
           className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors font-semibold text-sm"
         >
           <ArrowLeft size={16} /> Kembali
@@ -204,9 +204,8 @@ export default function DonateNewPage() {
         <div className="flex items-center gap-2 w-full max-w-sm">
           {[1, 2, 3].map((s) => (
             <div key={s} className="flex-1 flex items-center gap-2">
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all ${
-                step >= s ? "bg-blue-500 text-white shadow-md shadow-blue-500/20" : "bg-slate-100 text-slate-300"
-              }`}>{s}</div>
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all ${step >= s ? "bg-blue-500 text-white shadow-md shadow-blue-500/20" : "bg-slate-100 text-slate-300"
+                }`}>{s}</div>
               {s < 3 && <div className={`h-1 flex-1 rounded-full ${step > s ? "bg-blue-500" : "bg-slate-100"}`} />}
             </div>
           ))}
@@ -229,14 +228,14 @@ export default function DonateNewPage() {
                   {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <ImageIcon className="w-full h-full p-4 text-slate-200" />}
                 </div>
                 <div className="flex-1 min-w-0 space-y-2 w-full">
-                  <input 
+                  <input
                     type="text"
                     value={item.title}
                     onChange={(e) => handleItemChange(index, "title", e.target.value)}
                     className="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 focus:bg-white focus:border-blue-500 outline-none text-sm font-bold text-slate-800 transition-all"
                     placeholder="Nama barang..."
                   />
-                  <textarea 
+                  <textarea
                     rows={2}
                     value={item.description}
                     onChange={(e) => handleItemChange(index, "description", e.target.value)}
@@ -244,7 +243,7 @@ export default function DonateNewPage() {
                     placeholder="Deskripsi barang..."
                   />
                 </div>
-                <button 
+                <button
                   onClick={() => handleRemoveItem(index)}
                   className="p-2 text-slate-300 hover:text-red-500 transition-colors"
                 >
@@ -271,12 +270,11 @@ export default function DonateNewPage() {
           ) : (
             <div className="grid gap-3">
               {partners.map((partner) => (
-                <div 
+                <div
                   key={partner.id}
                   onClick={() => setSelectedPartner(partner)}
-                  className={`bg-white rounded-2xl p-4 border-2 transition-all cursor-pointer ${
-                    selectedPartner?.id === partner.id ? "border-blue-500 bg-blue-50/20" : "border-slate-100"
-                  }`}
+                  className={`bg-white rounded-2xl p-4 border-2 transition-all cursor-pointer ${selectedPartner?.id === partner.id ? "border-blue-500 bg-blue-50/20" : "border-slate-100"
+                    }`}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-slate-800 text-sm">{partner.name}</h3>
@@ -290,9 +288,9 @@ export default function DonateNewPage() {
               ))}
             </div>
           )}
-          <button 
+          <button
             disabled={!selectedPartner}
-            onClick={() => setStep(3)} 
+            onClick={() => setStep(3)}
             className="w-full py-4 rounded-2xl bg-blue-500 text-white font-extrabold shadow-lg shadow-blue-500/20 disabled:opacity-50 active:scale-95 transition-all"
           >
             Pilih Metode Pengiriman
@@ -304,11 +302,10 @@ export default function DonateNewPage() {
       {step === 3 && (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-2 duration-300">
           <div className="grid grid-cols-2 gap-4">
-            <div 
+            <div
               onClick={() => setDeliveryMethod("drop_off")}
-              className={`p-6 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center gap-3 ${
-                deliveryMethod === "drop_off" ? "border-blue-500 bg-blue-50/30" : "border-slate-100 bg-white"
-              }`}
+              className={`p-6 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center gap-3 ${deliveryMethod === "drop_off" ? "border-blue-500 bg-blue-50/30" : "border-slate-100 bg-white"
+                }`}
             >
               <div className="text-3xl">🏢</div>
               <div className="text-center">
@@ -316,11 +313,10 @@ export default function DonateNewPage() {
                 <p className="text-[10px] text-slate-400">Antar langsung</p>
               </div>
             </div>
-            <div 
+            <div
               onClick={() => setDeliveryMethod("pickup")}
-              className={`p-6 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center gap-3 ${
-                deliveryMethod === "pickup" ? "border-blue-500 bg-blue-50/30" : "border-slate-100 bg-white"
-              }`}
+              className={`p-6 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center gap-3 ${deliveryMethod === "pickup" ? "border-blue-500 bg-blue-50/30" : "border-slate-100 bg-white"
+                }`}
             >
               <div className="text-3xl">🚚</div>
               <div className="text-center">
@@ -337,7 +333,7 @@ export default function DonateNewPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Alamat Lengkap</label>
-                    <textarea 
+                    <textarea
                       rows={2}
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
@@ -347,7 +343,7 @@ export default function DonateNewPage() {
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Waktu Penjemputan</label>
-                    <input 
+                    <input
                       type="datetime-local"
                       value={pickupTime}
                       onChange={(e) => setPickupTime(e.target.value)}
@@ -362,13 +358,13 @@ export default function DonateNewPage() {
           {deliveryMethod === "drop_off" && (
             <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
               <p className="text-[11px] text-blue-700 font-medium">
-                Kamu akan mengantarkan barang ke <strong>{selectedPartner?.name}</strong> di alamat: <br/>
+                Kamu akan mengantarkan barang ke <strong>{selectedPartner?.name}</strong> di alamat: <br />
                 <span className="text-blue-500">{selectedPartner?.address}</span>
               </p>
             </div>
           )}
 
-          <button 
+          <button
             disabled={loading}
             onClick={handleSubmitDonation}
             className="w-full py-4 rounded-2xl bg-blue-500 text-white font-extrabold shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"

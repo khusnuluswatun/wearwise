@@ -22,7 +22,7 @@ export default function MyWardrobePage() {
       const userStr = localStorage.getItem("user");
       const parsedUser = userStr ? JSON.parse(userStr) : null;
       setUser(parsedUser);
-      
+
       const url = parsedUser?.id ? `/api/items?userId=${parsedUser.id}` : "/api/items";
       const res = await fetch(url);
       const data = await res.json();
@@ -35,25 +35,25 @@ export default function MyWardrobePage() {
     setLoading(false);
   };
 
-  const sellItems = items.filter(i => i.status === "available" && i.userId === user?.id && i.latestTransaction?.status !== "rejected");
-  const donateItems = items.filter(i => i.status.includes("donated") && i.userId === user?.id);
-  const upcycleItems = items.filter(i => i.status.includes("upcycling") && i.userId === user?.id);
-  const recycleItems = items.filter(i => i.status.includes("recycling") && i.userId === user?.id);
+  const sellItems = items.filter(i => i.scan?.userChoice === "Sell" && i.status !== "sold" && i.latestTransaction?.status !== "rejected" && i.userId === user?.id);
+  const donateItems = items.filter(i => i.scan?.userChoice === "Donate" && i.status !== "donated_success" && i.userId === user?.id);
+  const upcycleItems = items.filter(i => i.scan?.userChoice === "Upcycle" && i.status !== "upcycled" && i.userId === user?.id);
+  const recycleItems = items.filter(i => i.scan?.userChoice === "Recycle" && i.status !== "recycled" && i.userId === user?.id);
   const rejectedItems = items.filter(i => i.status === "available" && i.latestTransaction?.status === "rejected" && i.userId === user?.id);
-  const historyItems = items.filter(i => 
-    (["sold", "pending", "donated", "upcycled", "recycled"].includes(i.status) && i.userId === user?.id) || 
-    (user?.id && i.userId !== user?.id)
+  const historyItems = items.filter(i =>
+    (["sold", "donated_success", "upcycled", "recycled"].includes(i.status) && i.userId === user?.id) ||
+    (user?.id && i.userId !== user?.id && i.status === "sold")
   );
 
   // Notification counts for tabs (pending actions)
-  const sellNotif = items.filter(i => i.status === "pending" && i.userId === user?.id).length;
-  const donateNotif = items.filter(i => i.status === "donated_pending" && i.userId === user?.id).length;
-  const upcycleNotif = items.filter(i => i.status === "upcycle_pending" && i.userId === user?.id).length;
-  const recycleNotif = items.filter(i => i.status === "recycle_pending" && i.userId === user?.id).length;
+  const sellNotif = items.filter(i => i.scan?.userChoice === "Sell" && i.status === "pending" && i.userId === user?.id).length;
+  const donateNotif = items.filter(i => i.scan?.userChoice === "Donate" && i.status === "donated_pending" && i.userId === user?.id).length;
+  const upcycleNotif = items.filter(i => i.scan?.userChoice === "Upcycle" && i.status === "upcycling_pending" && i.userId === user?.id).length;
+  const recycleNotif = items.filter(i => i.scan?.userChoice === "Recycle" && i.status === "recycling_pending" && i.userId === user?.id).length;
   const rejectedNotif = rejectedItems.length;
 
   const getDisplayItems = () => {
-    switch(activeTab) {
+    switch (activeTab) {
       case "sell": return sellItems;
       case "donate": return donateItems;
       case "upcycle": return upcycleItems;
@@ -76,8 +76,12 @@ export default function MyWardrobePage() {
       }
       return { label: "Tersedia", color: "bg-green-50 text-green-600 border-green-100" };
     }
-    if (item.status.includes("upcycling")) return { label: "Upcycling", color: "bg-purple-50 text-purple-600 border-purple-100" };
-    if (item.status.includes("recycling")) return { label: "Recycling", color: "bg-blue-50 text-blue-600 border-blue-100" };
+    if (item.status === "donated_pending" || item.status === "donated") return { label: "Proses Donasi", color: "bg-rose-50 text-rose-600 border-rose-100" };
+    if (item.status === "donated_success") return { label: "Donasi Berhasil", color: "bg-green-50 text-green-600 border-green-100" };
+    if (item.status.includes("upcycling")) return { label: "Proses Upcycling", color: "bg-purple-50 text-purple-600 border-purple-100" };
+    if (item.status === "upcycled") return { label: "Upcycle Berhasil", color: "bg-green-50 text-green-600 border-green-100" };
+    if (item.status.includes("recycling")) return { label: "Proses Recycling", color: "bg-blue-50 text-blue-600 border-blue-100" };
+    if (item.status === "recycled") return { label: "Recycle Berhasil", color: "bg-green-50 text-green-600 border-green-100" };
     if (item.status === "sold") return { label: "Terjual", color: "bg-slate-900 text-white border-transparent" };
     if (item.status === "pending") return { label: "Menunggu", color: "bg-amber-50 text-amber-600 border-amber-100" };
     return { label: item.status, color: "bg-slate-100 text-slate-500 border-slate-200" };
@@ -90,8 +94,8 @@ export default function MyWardrobePage() {
           <h1 className="text-4xl font-display font-extrabold text-slate-900 mb-2 tracking-tight">My Wardrobe</h1>
           <p className="text-slate-500 font-medium">Koleksi barang pribadimu yang sudah di-scan & diproses.</p>
         </div>
-        <Link 
-          href="/dashboard/scan" 
+        <Link
+          href="/dashboard/scan"
           className="flex items-center gap-3 bg-slate-900 hover:bg-slate-800 text-white px-8 py-4 rounded-[20px] font-bold shadow-xl shadow-slate-200 transition-all hover:-translate-y-1 active:scale-95 w-full md:w-auto justify-center"
         >
           <Plus size={20} /> Scan Barang Baru
@@ -112,22 +116,20 @@ export default function MyWardrobePage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2.5 px-6 py-3 rounded-full font-bold text-xs whitespace-nowrap transition-all border-2 shrink-0 relative ${
-              activeTab === tab.id 
+            className={`flex items-center gap-2.5 px-6 py-3 rounded-full font-bold text-xs whitespace-nowrap transition-all border-2 shrink-0 relative ${activeTab === tab.id
                 ? tab.id === "rejected" && tab.count > 0
                   ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-200"
-                  : "bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-200" 
+                  : "bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-200"
                 : "bg-white border-slate-100 text-slate-500 hover:border-slate-200 hover:bg-slate-50 shadow-sm"
-            }`}
+              }`}
           >
             <tab.icon size={16} strokeWidth={2.5} />
             {tab.label}
             {tab.count > 0 && (
-              <span className={`ml-1 px-2 py-0.5 rounded-full text-[10px] ${
-                activeTab === tab.id 
-                  ? "bg-white/20 text-white" 
+              <span className={`ml-1 px-2 py-0.5 rounded-full text-[10px] ${activeTab === tab.id
+                  ? "bg-white/20 text-white"
                   : tab.id === "rejected" ? "bg-red-100 text-red-600" : "bg-slate-100 text-slate-400"
-              }`}>
+                }`}>
                 {tab.count}
               </span>
             )}
@@ -154,8 +156,8 @@ export default function MyWardrobePage() {
           <p className="text-slate-500 max-w-sm mb-10 leading-relaxed font-medium">
             Mulai kelola pakaian lamamu dengan men-scan-nya menggunakan AI WearWise.
           </p>
-          <Link 
-            href="/dashboard/scan" 
+          <Link
+            href="/dashboard/scan"
             className="bg-green-500 text-white px-10 py-4 rounded-2xl font-extrabold hover:bg-green-600 transition-all shadow-xl shadow-green-100"
           >
             Scan Sekarang
@@ -170,12 +172,12 @@ export default function MyWardrobePage() {
                 <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 transition-all group h-full flex flex-col hover:-translate-y-3">
                   <div className="aspect-[4/5] bg-slate-100 relative overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img 
-                      src={item.imageUrl} 
+                    <img
+                      src={item.imageUrl}
                       alt={item.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                     />
-                    
+
                     {/* Status Badge Overlay */}
                     <div className="absolute top-5 left-5">
                       <div className={`px-4 py-2 rounded-2xl font-extrabold text-[10px] uppercase tracking-widest shadow-lg border backdrop-blur-md ${badge.color}`}>
@@ -197,7 +199,7 @@ export default function MyWardrobePage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="p-8 flex flex-col flex-1">
                     <h3 className="font-bold text-lg text-slate-800 line-clamp-2 mb-4 group-hover:text-green-600 transition-colors leading-tight">
                       {item.title}
@@ -215,7 +217,7 @@ export default function MyWardrobePage() {
                         <p className="text-[9px] text-slate-400 mt-2 font-bold uppercase">Kamu bisa mendonasikan ulang ke partner lain.</p>
                       </div>
                     )}
-                    
+
                     <div className="pt-6 border-t border-slate-50 flex items-center justify-between mt-auto">
                       <div className="flex items-center gap-3 text-slate-500">
                         <div className="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center">
@@ -225,7 +227,7 @@ export default function MyWardrobePage() {
                           {item.user?.address?.split(',')[0] || "Alamat..."}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl">
                         <div className={`w-2 h-2 rounded-full ${item.status === "available" ? "bg-green-500 animate-pulse" : "bg-slate-300"}`}></div>
                         <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tighter">Info</span>
