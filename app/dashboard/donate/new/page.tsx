@@ -269,8 +269,8 @@ export default function DonateNewPage() {
             </div>
           ) : (
             <div className="grid gap-3">
-              {partners.map((partner) => (
-                <div
+              {partners.map((partner: any) => (
+                <div 
                   key={partner.id}
                   onClick={() => setSelectedPartner(partner)}
                   className={`bg-white rounded-2xl p-4 border-2 transition-all cursor-pointer ${selectedPartner?.id === partner.id ? "border-blue-500 bg-blue-50/20" : "border-slate-100"

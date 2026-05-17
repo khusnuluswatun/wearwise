@@ -12,7 +12,7 @@ export default function MarketClient({ items }: { items: any[] }) {
     if (userStr) setUserId(JSON.parse(userStr).id);
   }, []);
 
-  const filteredItems = items.filter(item => item.userId !== userId);
+  const filteredItems = items.filter((item: any) => item.userId !== userId);
 
   return (
     <div className="max-w-7xl mx-auto py-4">
@@ -31,7 +31,7 @@ export default function MarketClient({ items }: { items: any[] }) {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-          {filteredItems.map((item) => (
+          {filteredItems.map((item: any) => (
             <Link href={`/dashboard/market/${item.id}`} key={item.id}>
               <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-all group cursor-pointer h-full flex flex-col hover:-translate-y-1">
                 <div className="aspect-[4/5] bg-slate-100 relative overflow-hidden">

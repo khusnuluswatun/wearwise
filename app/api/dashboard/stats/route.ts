@@ -40,11 +40,10 @@ export async function GET(req: Request) {
     const inMarketItemsCount = itemStatsRaw.find(s => s.status === 'available')?._count.id || 0;
 
     const stats = {
-      donation: statsRaw.find(s => s.type.toLowerCase() === 'donate' || s.type.toLowerCase() === 'donasi')?._count.id || 0,
-      recycle: statsRaw.find(s => s.type.toLowerCase() === 'recycle')?._count.id || 0,
-      sell: soldItemsCount,
-      upcycle: statsRaw.find(s => s.type.toLowerCase() === 'upcycle')?._count.id || 0,
-      inMarket: inMarketItemsCount,
+      donation: statsRaw.find((s: any) => s.type.toLowerCase() === 'donate' || s.type.toLowerCase() === 'donasi')?._count.id || 0,
+      recycle: statsRaw.find((s: any) => s.type.toLowerCase() === 'recycle')?._count.id || 0,
+      sell: statsRaw.find((s: any) => s.type.toLowerCase() === 'sell')?._count.id || 0,
+      upcycle: statsRaw.find((s: any) => s.type.toLowerCase() === 'upcycle')?._count.id || 0,
     };
 
     // 3. Get Recent Activity (Merged from Transactions and Scans with choices)
@@ -122,19 +121,26 @@ export async function GET(req: Request) {
       })
     );
 
-    const saleActivities = saleTransactions.map(tx => ({
-      id: `#${tx.id.substring(0, 6)}`,
-      realId: tx.id,
-      name: tx.item?.title || "Sold Item",
-      category: "Sell",
-      place: "Marketplace",
-      status: tx.status === "verified" ? "Success" : tx.status === "pending_verification" ? "Pending" : tx.status.charAt(0).toUpperCase() + tx.status.slice(1),
-      imageUrl: tx.item?.imageUrl || tx.proofImageUrl,
-      createdAt: tx.createdAt,
-      endDate: tx.verifiedAt,
-      paymentMethod: "N/A",
-      isTransaction: true,
-      link: `/dashboard/my-market/${tx.itemId}`
+    const saleActivities = await Promise.all(saleTransactions.map(async (tx) => {
+      let imageUrl = tx.proofImageUrl;
+      if (tx.item?.scanId) {
+        const scan = await prisma.scan.findUnique({ where: { id: tx.item.scanId } });
+        if (scan) imageUrl = scan.imageUrl;
+      }
+      return {
+        id: `#${tx.id.substring(0, 6)}`,
+        realId: tx.id,
+        name: tx.item?.title || "Sold Item",
+        category: "Sell",
+        place: "Marketplace",
+        status: tx.status === "verified" ? "Success" : tx.status === "pending_verification" ? "Pending" : tx.status.charAt(0).toUpperCase() + tx.status.slice(1),
+        imageUrl: imageUrl,
+        createdAt: tx.createdAt,
+        endDate: tx.verifiedAt,
+        paymentMethod: "N/A",
+        isTransaction: true,
+        link: `/dashboard/my-market/${tx.itemId}`
+      };
     }));
 
     // Add scans that haven't become transactions yet
@@ -163,17 +169,19 @@ export async function GET(req: Request) {
     // Remove duplicates from transactionActivities if they are already in saleActivities
     const saleItemIds = new Set(saleTransactions.map(st => st.itemId));
     const filteredTransactionActivities = transactionActivities.filter(tx => {
-      if (tx.category.toLowerCase() === 'sell' && saleItemIds.has(transactions.find(t => t.id === tx.realId)?.itemId)) {
+      const relatedTx = transactions.find(t => t.id === tx.realId);
+      if (tx.category.toLowerCase() === 'sell' && relatedTx?.itemId && saleItemIds.has(relatedTx.itemId)) {
         return false; // Skip because it's already in saleActivities
       }
       return true;
     });
 
     // Merge and sort
-    const recentActivity = [...filteredTransactionActivities, ...saleActivities, ...scanActivities]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    const recentActivity = [...transactionActivities, ...scanActivities]
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 5); // Limit to 5 items as requested
 
+    
     // 4. Get Analytics (Counts by status)
     const analyticsRaw = await prisma.transaction.groupBy({
       by: ['status'],
@@ -184,34 +192,16 @@ export async function GET(req: Request) {
       _count: { id: true }
     });
 
-    const saleAnalyticsRaw = await prisma.saleTransaction.groupBy({
-      by: ['status'],
-      where: { sellerId: userId },
-      _count: { id: true }
-    });
-
-    const totalTransactionsCount = analyticsRaw.reduce((acc, curr) => acc + curr._count.id, 0);
-    const totalSaleTransactionsCount = saleAnalyticsRaw.reduce((acc, curr) => acc + curr._count.id, 0);
-    const totalTransactions = totalTransactionsCount + totalSaleTransactionsCount + inMarketItemsCount;
-
-    const txSuccessCount = analyticsRaw.find(s => s.status.toLowerCase() === 'success')?._count.id || 0;
-    const saleSuccessCount = (saleAnalyticsRaw.find(s => s.status.toLowerCase() === 'verified')?._count.id || 0) +
-                             (saleAnalyticsRaw.find(s => s.status.toLowerCase() === 'pending_verification')?._count.id || 0);
-
-    const txPendingCount = (analyticsRaw.find(s => s.status.toLowerCase() === 'pending')?._count.id || 0) + 
-                           (analyticsRaw.find(s => s.status.toLowerCase() === 'confirmed')?._count.id || 0) + 
-                           (analyticsRaw.find(s => s.status.toLowerCase() === 'completed')?._count.id || 0) +
-                           (analyticsRaw.find(s => s.status.toLowerCase() === 'available')?._count.id || 0);
-    const salePendingCount = 0; // We consider pending_verification as Success for the seller's dashboard
-
-    const txRejectedCount = analyticsRaw.find(s => s.status.toLowerCase() === 'rejected')?._count.id || 0;
-    const saleRejectedCount = saleAnalyticsRaw.find(s => s.status.toLowerCase() === 'rejected')?._count.id || 0;
-
+    const totalTransactions = analyticsRaw.reduce((acc: any, curr: any) => acc + curr._count.id, 0);
     const analytics = [
-      { name: "Success", value: txSuccessCount + saleSuccessCount, color: "#3b82f6" },
-      { name: "Pending", value: txPendingCount + salePendingCount + inMarketItemsCount, color: "#fbbf24" },
-      { name: "Rejected", value: txRejectedCount + saleRejectedCount, color: "#f87171" },
+      { name: "Success", value: analyticsRaw.find((s: any) => s.status.toLowerCase() === 'success')?._count.id || 0, color: "#3b82f6" },
+      { name: "Pending", value: (analyticsRaw.find((s: any) => s.status.toLowerCase() === 'pending')?._count.id || 0) + 
+                                (analyticsRaw.find((s: any) => s.status.toLowerCase() === 'confirmed')?._count.id || 0) + 
+                                (analyticsRaw.find((s: any) => s.status.toLowerCase() === 'completed')?._count.id || 0) +
+                                (analyticsRaw.find((s: any) => s.status.toLowerCase() === 'available')?._count.id || 0), color: "#fbbf24" },
+      { name: "Rejected", value: analyticsRaw.find((s: any) => s.status.toLowerCase() === 'rejected')?._count.id || 0, color: "#f87171" },
     ];
+
 
     // 5. Get Report Data (Last 7 months)
     const sevenMonthsAgo = new Date();
@@ -245,7 +235,7 @@ export async function GET(req: Request) {
       reportMap[key] = 0;
     }
 
-    [...reportRaw, ...saleReportRaw].forEach(tx => {
+    reportRaw.forEach((tx: any) => {
       const d = new Date(tx.createdAt);
       const key = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
       if (reportMap[key] !== undefined) {
@@ -296,6 +286,8 @@ export async function GET(req: Request) {
     }
 
     // Success rate calculation for display
+    const txSuccessCount = analyticsRaw.find((s: any) => s.status.toLowerCase() === 'success')?._count.id || 0;
+    const saleSuccessCount = saleTransactions.filter(tx => tx.status === 'verified').length;
     const successRate = totalTransactions > 0 ? Math.round(((txSuccessCount + saleSuccessCount) / totalTransactions) * 100) : 0;
 
     return NextResponse.json({

@@ -73,7 +73,7 @@ export default function PartnerUpcyclesPage() {
     if (statusFilter === "all") {
       setFiltered(upcycles);
     } else {
-      setFiltered(upcycles.filter((d) => d.status === statusFilter));
+      setFiltered(upcycles.filter((d: any) => d.status === statusFilter));
     }
   }, [statusFilter, upcycles]);
 
@@ -113,7 +113,7 @@ export default function PartnerUpcyclesPage() {
 
       // Update local state
       setUpcycles((prev) =>
-        prev.map((d) => (d.id === txId ? { ...d, status: newStatus, price: priceInput ? parseInt(priceInput) : d.price, endDate: deadlineInput ? new Date(deadlineInput) : d.endDate } : d))
+        prev.map((d: any) => (d.id === txId ? { ...d, status: newStatus, price: priceInput ? parseInt(priceInput) : d.price, endDate: deadlineInput ? new Date(deadlineInput) : d.endDate } : d))
       );
       setSelectedTx(null);
       setPriceInput("");
@@ -170,7 +170,7 @@ export default function PartnerUpcyclesPage() {
         {(["all", "pending", "confirmed", "completed", "rejected"] as Status[]).map((s) => {
           const cfg = s === "all" ? null : STATUS_CONFIG[s];
           const isActive = statusFilter === s;
-          const count = s === "all" ? upcycles.length : upcycles.filter(u => u.status === s).length;
+          const count = s === "all" ? upcycles.length : upcycles.filter((u: any) => u.status === s).length;
           return (
             <button
               key={s}

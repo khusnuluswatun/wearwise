@@ -33,7 +33,7 @@ export async function GET(req: Request) {
     
     let success = 0, pending = 0, rejected = 0;
     
-    [...normalTx, ...saleTx].forEach(tx => {
+    [...normalTx, ...saleTx].forEach((tx: any) => {
       const s = tx.status.toLowerCase();
       if (s.includes("success") || s.includes("completed") || s === "verified") success++;
       else if (s.includes("reject")) rejected++;
@@ -57,7 +57,7 @@ export async function GET(req: Request) {
     });
 
     // Map normal tx
-    const recentNormalP = rawNormalTx.map(async (tx) => {
+    const recentNormalP = rawNormalTx.map(async (tx: any) => {
       let itemName = "Apparel";
       if (tx.itemId) {
         const item = await prisma.item.findUnique({ where: { id: tx.itemId } });
@@ -103,7 +103,7 @@ export async function GET(req: Request) {
       include: { item: true, buyer: true }
     });
 
-    const recentSale = rawSaleTx.map(tx => {
+    const recentSale = rawSaleTx.map((tx: any) => {
       let statusColor = "text-blue-500";
       let displayStatus = "Waiting";
       if (tx.status === "verified") {
@@ -130,7 +130,7 @@ export async function GET(req: Request) {
     
     // Combine and sort
     const recentActivity = [...recentNormal, ...recentSale]
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .sort((a: any, b: any) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, 5)
       .map(({ createdAt, ...rest }) => rest);
 
@@ -169,7 +169,7 @@ export async function GET(req: Request) {
       reportMap.set(monthStr, 0);
     }
 
-    allTx.forEach(tx => {
+    allTx.forEach((tx: any) => {
       const monthStr = monthNames[tx.createdAt.getMonth()];
       if (reportMap.has(monthStr)) {
         reportMap.set(monthStr, reportMap.get(monthStr) + 1);

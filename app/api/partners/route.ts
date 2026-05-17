@@ -90,7 +90,7 @@ export async function GET(request: Request) {
       }
     });
 
-    let result = partners.map(p => ({
+    let result = partners.map((p: any) => ({
       ...p,
       distance: null as number | null,
     }));
@@ -124,7 +124,7 @@ export async function GET(request: Request) {
         }
 
         // Sort by distance (asc)
-        result.sort((a, b) => {
+        result.sort((a: any, b: any) => {
           if (a.distance === null && b.distance === null) return 0;
           if (a.distance === null) return 1;
           if (b.distance === null) return -1;

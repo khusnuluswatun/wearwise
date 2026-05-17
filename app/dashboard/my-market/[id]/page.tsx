@@ -39,6 +39,7 @@ interface SaleTransaction {
   status: string;
   proofImageUrl: string;
   createdAt: string;
+  verifiedAt?: string;
   buyer: { name: string; email: string };
 }
 
@@ -51,6 +52,8 @@ interface Item {
   userId: string;
   imageUrl: string;
   scanId: string;
+  createdAt?: string;
+  user?: User;
   saleTransactions: SaleTransaction[];
   latestTransaction?: any;
   scanData?: {
@@ -347,8 +350,8 @@ export default function MyMarketDetailPage() {
                       </p>
                       <p className="text-[10px] text-slate-500 font-medium">
                         Diselesaikan pada {new Date(item.status === "sold" 
-                          ? item.saleTransactions?.find(t => t.status === "verified")?.verifiedAt || item.createdAt 
-                          : item.latestTransaction?.endDate || item.latestTransaction?.createdAt || item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          ? item.saleTransactions?.find(t => t.status === "verified")?.verifiedAt || item.latestTransaction.createdAt 
+                          : item.latestTransaction?.endDate || item.latestTransaction?.createdAt || item.latestTransaction.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </p>
                     </div>
                   </div>
@@ -376,7 +379,7 @@ export default function MyMarketDetailPage() {
             <div className="space-y-1.5">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dibuat Pada</p>
               <p className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                <Clock size={14} className="text-purple-500" /> {new Date(item.createdAt).toLocaleDateString('id-ID')}
+                <Clock size={14} className="text-purple-500" /> {new Date(item.latestTransaction.createdAt).toLocaleDateString('id-ID')}
               </p>
             </div>
 

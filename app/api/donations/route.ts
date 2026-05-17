@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
-import fs from "fs";
-import path from "path";
+import { uploadToSupabase } from "../../../lib/supabase";
 import crypto from "crypto";
 
 // POST /api/donations — user submits donation items to a partner
@@ -32,10 +31,6 @@ export async function POST(req: Request) {
       await prisma.user.update({ where: { id: userId }, data: { address: pickupAddress } });
     }
 
-    // Ensure uploads directory exists
-    const uploadDir = path.join(process.cwd(), "public/uploads");
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
     const createdTransactions = [];
 
     for (let i = 0; i < items.length; i++) {
@@ -59,12 +54,9 @@ export async function POST(req: Request) {
         }
       }
 
-      // If no existing scan or scan not found, create new one (fallback)
+      // If no existing scan or scan not found, upload to Supabase Storage
       if (!imageUrl && imageFile) {
-        const buffer = Buffer.from(await imageFile.arrayBuffer());
-        const fileName = `${crypto.randomUUID()}-${(item.fileName || "item.jpg").replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-        fs.writeFileSync(path.join(uploadDir, fileName), buffer);
-        imageUrl = `/uploads/${fileName}`;
+        imageUrl = await uploadToSupabase(imageFile, "donations");
 
         const scan = await prisma.scan.create({
           data: { userId, imageUrl, userChoice: "Donate", aiRecommendation: "Donate" },
@@ -127,7 +119,7 @@ export async function GET(req: Request) {
 
     // Fetch item data separately since Transaction.item relation doesn't exist in schema
     const txWithItems = await Promise.all(
-      transactions.map(async (tx) => {
+      transactions.map(async (tx: any) => {
         let item = null;
         if (tx.itemId) {
           item = await prisma.item.findUnique({ where: { id: tx.itemId } });

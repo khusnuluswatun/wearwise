@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       const filePath = path.join(uploadDir, fileName);
       fs.writeFileSync(filePath, buffer);
       
-      imageUrl = `/uploads/${fileName}`;
+      imageUrl = `/api/uploads/${fileName}`;
 
       // Create Scan record
       const scan = await prisma.scan.create({
