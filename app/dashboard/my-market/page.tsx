@@ -190,7 +190,15 @@ export default function MyWardrobePage() {
                         <div className="flex flex-col">
                           <span className="text-[10px] font-bold text-slate-400 uppercase">Tujuan / Harga</span>
                           <span className="text-sm font-extrabold text-slate-900">
-                            {item.price > 0 ? `Rp ${item.price.toLocaleString("id-ID")}` : "Donasi"}
+                            {item.scan?.userChoice === "Recycle" || item.status?.includes("recycled") || item.status?.includes("recycling")
+                              ? "Recycle"
+                              : item.scan?.userChoice === "Upcycle" || item.status?.includes("upcycled") || item.status?.includes("upcycling")
+                              ? "Upcycle"
+                              : item.scan?.userChoice === "Donate" || item.status?.includes("donated")
+                              ? "Donasi"
+                              : item.price > 0
+                              ? `Rp ${item.price.toLocaleString("id-ID")}`
+                              : "Donasi"}
                           </span>
                         </div>
                         <div className="p-2 bg-green-500 text-white rounded-xl">
