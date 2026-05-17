@@ -29,17 +29,6 @@ export async function POST(req: Request) {
       }
     });
 
-    // 2. If choice is Recycle, create a final transaction immediately
-    if (userChoice.toLowerCase() === "recycle") {
-      await prisma.transaction.create({
-        data: {
-          userId,
-          scanId: scan.id,
-          type: "recycle",
-          status: "completed", // Recycle is usually immediate
-        }
-      });
-    }
 
     return NextResponse.json({ success: true, scanId: scan.id });
   } catch (err: any) {

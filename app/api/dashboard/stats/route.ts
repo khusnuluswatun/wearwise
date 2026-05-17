@@ -35,17 +35,15 @@ export async function GET(req: Request) {
       _count: { id: true }
     });
 
-    const soldItemsCount = (itemStatsRaw.find((s: any) => s.status === 'sold')?._count.id || 0) + 
-                           (itemStatsRaw.find((s: any) => s.status === 'pending')?._count.id || 0);
-    const inMarketItemsCount = itemStatsRaw.find((s: any) => s.status === 'available')?._count.id || 0;
-
-    const sellCountRaw = statsRaw.find((s: any) => s.type.toLowerCase() === 'sell')?._count.id || 0;
-    const saleTxCount = await prisma.saleTransaction.count({ where: { sellerId: userId } });
+    const soldItemsCount = itemStatsRaw.find((s: any) => s.status === 'sold')?._count.id || 0;
+    const inMarketItemsCount = (itemStatsRaw.find((s: any) => s.status === 'available')?._count.id || 0) + 
+                               (itemStatsRaw.find((s: any) => s.status === 'pending')?._count.id || 0);
 
     const stats = {
       donation: statsRaw.find((s: any) => s.type.toLowerCase() === 'donate' || s.type.toLowerCase() === 'donasi')?._count.id || 0,
       recycle: statsRaw.find((s: any) => s.type.toLowerCase() === 'recycle')?._count.id || 0,
-      sell: sellCountRaw + saleTxCount,
+      sell: soldItemsCount,
+      inMarket: inMarketItemsCount,
       upcycle: statsRaw.find((s: any) => s.type.toLowerCase() === 'upcycle')?._count.id || 0,
     };
 
