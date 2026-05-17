@@ -1,9 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder";
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder";
 
 // Public client — for frontend usage
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -32,7 +34,21 @@ export async function uploadToSupabase(file: File, folder: string): Promise<stri
 
   // Sanitize original filename and prepend UUID to avoid collisions
   const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-  const fileName = `${folder}/${crypto.randomUUID()}-${safeName}`;
+  const uniquePrefix = crypto.randomUUID();
+  const fileName = `${folder}/${uniquePrefix}-${safeName}`;
+
+  // Local fallback if Supabase is not configured
+  if (supabaseUrl === "https://placeholder.supabase.co" || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    console.log("Supabase not configured. Falling back to local upload...");
+    const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
+    await mkdir(uploadDir, { recursive: true });
+    
+    const filePath = path.join(uploadDir, `${uniquePrefix}-${safeName}`);
+    await writeFile(filePath, buffer);
+    
+    // Return local API route URL to prevent Next.js dev caching 404s
+    return `/api/uploads/${folder}/${uniquePrefix}-${safeName}`;
+  }
 
   const { error } = await supabaseAdmin.storage
     .from(BUCKET)

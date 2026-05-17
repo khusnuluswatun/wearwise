@@ -122,6 +122,12 @@ export async function GET(req: Request) {
       },
       include: {
         user: { select: { name: true, phone: true, address: true } },
+        saleTransactions: {
+          include: {
+            buyer: { select: { name: true, phone: true } },
+            seller: { select: { name: true, phone: true } }
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'
@@ -129,7 +135,7 @@ export async function GET(req: Request) {
     });
 
     // Fetch all related transactions to find notes/rejection reasons
-    const itemIds = items.map(i => i.id);
+    const itemIds = items.map((i: any) => i.id);
     const transactions = await prisma.transaction.findMany({
       where: { itemId: { in: itemIds } },
       include: { partner: { select: { name: true } } },
@@ -137,14 +143,19 @@ export async function GET(req: Request) {
     });
 
     const scans = await prisma.scan.findMany();
-    const itemsWithImages = items.map(item => {
-      const scan = scans.find(s => s.id === item.scanId);
+    const itemsWithImages = items.map((item: any) => {
+      const scan = scans.find((s: any) => s.id === item.scanId);
       // Get the latest transaction for this item
-      const latestTx = transactions.find(t => t.itemId === item.id);
+      const latestTx = transactions.find((t: any) => t.itemId === item.id);
+
+      let imageUrl = scan?.imageUrl || "/placeholder.png";
+      if (imageUrl.startsWith("/uploads/")) {
+        imageUrl = `/api${imageUrl}`;
+      }
 
       return {
         ...item,
-        imageUrl: scan?.imageUrl || "/placeholder.png",
+        imageUrl: imageUrl,
         latestTransaction: latestTx || null,
         scan: scan || null
       };
