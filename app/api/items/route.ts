@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
-import { uploadToSupabase } from "../../../lib/supabase";
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
 
 export async function POST(req: Request) {
   try {
@@ -12,9 +14,9 @@ export async function POST(req: Request) {
     const priceStr = formData.get("price") as string;
     const price = parseInt(priceStr.replace(/[^0-9]/g, "")) || 0; // strip non-numeric
     const address = formData.get("address") as string;
-
+    
     const file = formData.get("image") as File;
-
+    
     if (!userId || !title || !price) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
@@ -43,8 +45,17 @@ export async function POST(req: Request) {
     }
 
     if (!imageUrl && file) {
-      // Upload image to Supabase Storage
-      imageUrl = await uploadToSupabase(file, "items");
+      // Save image locally
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const uploadDir = path.join(process.cwd(), "public/uploads");
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      const fileName = `${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+      const filePath = path.join(uploadDir, fileName);
+      fs.writeFileSync(filePath, buffer);
+      
+      imageUrl = `/api/uploads/${fileName}`;
 
       // Create Scan record
       const scan = await prisma.scan.create({
@@ -93,20 +104,60 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
+    
+    if (!userId) {
+      return NextResponse.json({ success: true, items: [] });
+    }
 
     const items = await prisma.item.findMany({
-      where: userId ? { userId } : {},
+      where: {
+        OR: [
+          { userId },
+          {
+            saleTransactions: {
+              some: { buyerId: userId }
+            }
+          }
+        ]
+      },
       include: {
-        user: true,
+        user: { select: { name: true, phone: true, address: true } },
+        saleTransactions: {
+          include: {
+            buyer: { select: { name: true, phone: true } },
+            seller: { select: { name: true, phone: true } }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
+    });
+
+    // Fetch all related transactions to find notes/rejection reasons
+    const itemIds = items.map((i: any) => i.id);
+    const transactions = await prisma.transaction.findMany({
+      where: { itemId: { in: itemIds } },
+      include: { partner: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' }
     });
 
     const scans = await prisma.scan.findMany();
     const itemsWithImages = items.map((item: any) => {
       const scan = scans.find((s: any) => s.id === item.scanId);
+      // Get the latest transaction for this item
+      const latestTx = transactions.find((t: any) => t.itemId === item.id);
+
+      let imageUrl = scan?.imageUrl || "/placeholder.png";
+      if (imageUrl.startsWith("/uploads/")) {
+        imageUrl = `/api${imageUrl}`;
+      }
+
       return {
         ...item,
-        imageUrl: scan?.imageUrl || "/placeholder.png"
+        imageUrl: imageUrl,
+        latestTransaction: latestTx || null,
+        scan: scan || null
       };
     });
 

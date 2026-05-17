@@ -54,14 +54,30 @@ export default function PartnerDashboardLayout({ children }: { children: React.R
   const isRecycle = partnerInfo?.type === "recycle";
   const isService = isUpcycle || isRecycle;
 
+  const [notifCount, setNotifCount] = useState(0);
+
+  useEffect(() => {
+    if (partnerInfo?.id) {
+      const endpoint = isService ? `/api/upcycles?partnerId=${partnerInfo.id}&status=pending` : `/api/donations?partnerId=${partnerInfo.id}&status=pending`;
+      fetch(endpoint)
+        .then(r => r.json())
+        .then(d => {
+          if (d.success) {
+            setNotifCount(d.data.length);
+          }
+        })
+        .catch(err => console.error("Failed to fetch partner notifs:", err));
+    }
+  }, [partnerInfo, isService]);
+
   const navItems = isService
     ? [
-        { name: "Dashboard", href: "/partner/dashboard", icon: LayoutDashboard },
-        { name: isRecycle ? "Recycle Masuk" : "Upcycle Masuk", href: "/partner/dashboard/upcycles", icon: Leaf },
+        { name: "Dashboard", href: "/partner/dashboard", icon: LayoutDashboard, badge: 0 },
+        { name: isRecycle ? "Recycle Masuk" : "Upcycle Masuk", href: "/partner/dashboard/upcycles", icon: Leaf, badge: notifCount },
       ]
     : [
-        { name: "Dashboard", href: "/partner/dashboard", icon: LayoutDashboard },
-        { name: "Donasi Masuk", href: "/partner/dashboard/donations", icon: Heart },
+        { name: "Dashboard", href: "/partner/dashboard", icon: LayoutDashboard, badge: 0 },
+        { name: "Donasi Masuk", href: "/partner/dashboard/donations", icon: Heart, badge: notifCount },
       ];
 
   const handleLogout = () => {
@@ -134,6 +150,11 @@ export default function PartnerDashboardLayout({ children }: { children: React.R
               >
                 <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "text-green-500" : "text-slate-400"} />
                 {item.name}
+                {item.badge > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}

@@ -12,7 +12,8 @@ import {
   Star,
   TrendingUp,
   MoreHorizontal,
-  ScanLine
+  ScanLine,
+  Store
 } from "lucide-react";
 import {
   AreaChart,
@@ -91,6 +92,8 @@ export default function Dashboard() {
           reportData: result.data?.reportData?.length > 0 ? result.data.reportData : prev?.reportData || [],
           points: result.data?.rewardPoints ?? prev?.points ?? 0,
           totalTransactions: result.data?.totalTransactions || prev?.totalTransactions || 0,
+          growth: result.data?.growth ?? 0,
+          successRate: result.data?.successRate ?? 0,
         }));
       }
     } catch (err) {
@@ -111,6 +114,7 @@ export default function Dashboard() {
   const stats = [
     { title: "Donation", value: dashboardData?.stats?.donation || "0", icon: Heart, color: "text-blue-500", bg: "bg-blue-100/50" },
     { title: "Recycle", value: (dashboardData?.stats?.recycle ? dashboardData.stats.recycle + "kg" : "0kg"), icon: Recycle, color: "text-amber-500", bg: "bg-amber-100/50" },
+    { title: "Di Market", value: dashboardData?.stats?.inMarket || "0", icon: Store, color: "text-emerald-500", bg: "bg-emerald-100/50" },
     { title: "Sold", value: dashboardData?.stats?.sell || "0", icon: ShoppingBag, color: "text-rose-500", bg: "bg-rose-100/50" },
     { title: "Upcycle", value: dashboardData?.stats?.upcycle || "0", icon: RefreshCcw, color: "text-purple-500", bg: "bg-purple-100/50" },
   ];
@@ -160,7 +164,7 @@ export default function Dashboard() {
       <div className="bg-gradient-to-r from-emerald-500 to-teal-700 rounded-[2rem] p-8 md:p-10 text-white shadow-xl shadow-teal-900/10 relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div className="absolute top-0 right-0 -mt-16 -mr-16 w-80 h-80 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 -mb-16 -ml-16 w-64 h-64 bg-emerald-300 opacity-20 rounded-full blur-3xl pointer-events-none"></div>
-        
+
         <div className="relative z-10">
           <h1 className="text-3xl md:text-4xl font-display font-extrabold mb-3 tracking-tight">
             Welcome back, {user?.name?.split(' ')[0] || "Eco-warrior"}! 👋
@@ -169,19 +173,19 @@ export default function Dashboard() {
             Here's what's happening with your circular fashion journey today. Every action brings us closer to a greener planet!
           </p>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-3 relative z-10">
-          <button 
-            onClick={() => router.push('/dashboard/scan')} 
+          <button
+            onClick={() => router.push('/dashboard/scan')}
             className="bg-white text-teal-700 px-6 py-3 rounded-2xl font-extrabold text-sm shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2"
           >
             <ScanLine size={18} strokeWidth={2.5} /> Scan New Item
           </button>
-          <button 
+          <button
             onClick={() => {
               setLoading(true);
               fetchDashboardData(user?.id);
-            }} 
+            }}
             className="bg-teal-800/30 hover:bg-teal-800/50 text-white p-3 rounded-2xl backdrop-blur-md transition-all shadow-sm border border-teal-400/20"
             title="Refresh data"
           >
@@ -191,9 +195,9 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
         {stats.map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-shadow">
+          <div key={i} className="bg-white p-4 lg:p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className={`w-14 h-14 rounded-full flex items-center justify-center ${stat.bg} ${stat.color}`}>
               <stat.icon size={24} strokeWidth={2.5} />
             </div>
@@ -234,9 +238,11 @@ export default function Dashboard() {
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Est. Growth</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-3xl font-display font-extrabold text-green-500">+12%</span>
-                  <div className="bg-green-100 text-green-600 p-1.5 rounded-lg">
-                    <TrendingUp size={16} strokeWidth={3} />
+                  <span className={`text-3xl font-display font-extrabold ${dashboardData?.growth >= 0 ? "text-green-500" : "text-rose-500"}`}>
+                    {dashboardData?.growth >= 0 ? "+" : ""}{dashboardData?.growth || 0}%
+                  </span>
+                  <div className={`${dashboardData?.growth >= 0 ? "bg-green-100 text-green-600" : "bg-rose-100 text-rose-600"} p-1.5 rounded-lg`}>
+                    <TrendingUp size={16} strokeWidth={3} className={dashboardData?.growth < 0 ? "rotate-180" : ""} />
                   </div>
                 </div>
               </div>
@@ -284,8 +290,8 @@ export default function Dashboard() {
                 <span>Silver (1000)</span>
               </div>
               <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden shadow-inner">
-                <div 
-                  className="bg-gradient-to-r from-amber-400 to-orange-400 h-full rounded-full transition-all duration-1000 ease-out" 
+                <div
+                  className="bg-gradient-to-r from-amber-400 to-orange-400 h-full rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${Math.min(100, ((dashboardData?.points || 0) / 1000) * 100)}%` }}
                 ></div>
               </div>
@@ -324,7 +330,7 @@ export default function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-                <span className="text-3xl font-display font-extrabold text-slate-800">{dashboardData?.analytics?.find((a: any) => a.name === "Success")?.value || 0}%</span>
+                <span className="text-3xl font-display font-extrabold text-slate-800">{dashboardData?.successRate || 0}%</span>
                 <span className="text-xs font-semibold text-slate-500">Success Rate</span>
               </div>
             </div>

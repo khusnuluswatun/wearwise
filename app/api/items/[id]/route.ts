@@ -13,12 +13,21 @@ export async function GET(
   if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const scan = await prisma.scan.findUnique({ where: { id: item.scanId } });
+  
+  // Fetch the latest transaction for this item (donation/upcycle/recycle)
+  const transaction = await prisma.transaction.findFirst({
+    where: { itemId: id },
+    include: { partner: { select: { name: true } } },
+    orderBy: { createdAt: 'desc' }
+  });
+
   return NextResponse.json({
     success: true,
     item: { 
       ...item, 
       imageUrl: scan?.imageUrl || "/placeholder.png",
-      scanData: scan 
+      scanData: scan,
+      latestTransaction: transaction
     },
   });
 }

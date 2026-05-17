@@ -189,74 +189,100 @@ export default function PartnerUpcyclesPage() {
         })}
       </div>
 
-      {/* List */}
+      {/* List - Refactored to Canvas Style */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2.5rem] border border-slate-200">
-          <Package size={48} className="text-slate-200 mb-4" />
+        <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm">
+          <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+            <Package size={40} className="text-slate-200" />
+          </div>
           <p className="text-lg font-bold text-slate-600">Tidak ada pesanan</p>
+          <p className="text-slate-400 text-sm mt-1 font-medium">Semua pesanan {itemLabel.toLowerCase()} akan muncul di sini.</p>
         </div>
       ) : (
-        <div className="grid gap-4">
-          {filtered.map((tx: any) => {
-            const cfg = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
-            const StatusIcon = cfg.icon;
-            const warning = isDeadlineNear(tx.endDate);
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead className="bg-slate-50/50 border-b border-slate-100">
+                <tr className="text-left text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.2em]">
+                  <th className="px-8 py-5">Item & Customer</th>
+                  <th className="px-8 py-5">Penawaran</th>
+                  <th className="px-8 py-5">Tenggat</th>
+                  <th className="px-8 py-5">Status</th>
+                  <th className="px-8 py-5 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.map((tx) => {
+                  const cfg = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
+                  const StatusIcon = cfg.icon;
+                  const warning = isDeadlineNear(tx.endDate);
 
-            return (
-              <div 
-                key={tx.id}
-                onClick={() => { setSelectedTx(tx); setPriceInput(tx.price?.toString() || ""); setDeadlineInput(tx.endDate ? new Date(tx.endDate).toISOString().split('T')[0] : ""); }}
-                className={`group bg-white rounded-3xl border-2 p-5 shadow-sm transition-all cursor-pointer hover:border-purple-300 hover:shadow-xl hover:shadow-purple-500/5 ${warning && tx.status === "confirmed" ? "border-red-200 bg-red-50/10" : "border-slate-100"}`}
-              >
-                <div className="flex flex-col md:flex-row gap-5 items-center md:items-start">
-                  {/* Photo */}
-                  <div className="w-24 h-24 rounded-2xl bg-slate-100 overflow-hidden border border-slate-200 shrink-0">
-                    {tx.imageUrl ? (
-                      <img src={tx.imageUrl} alt="item" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center"><Package className="text-slate-300" /></div>
-                    )}
-                  </div>
-                  
-                  {/* Details */}
-                  <div className="flex-1 text-center md:text-left">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
-                      <div>
-                        <h3 className="font-extrabold text-slate-800 text-lg group-hover:text-purple-600 transition-colors">{tx.item?.title || "Item Upcycle"}</h3>
-                        <p className="text-xs text-slate-500">dari {tx.user?.name || "Pelanggan"}</p>
-                      </div>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold self-center md:self-start ${cfg.bg} ${cfg.color} ${cfg.border}`}>
-                        <StatusIcon size={12} /> {cfg.label}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                      {tx.price && (
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                          <DollarSign size={14} className="text-green-500" /> Rp {tx.price.toLocaleString()}
+                  return (
+                    <tr 
+                      key={tx.id}
+                      className={`group hover:bg-slate-50/50 transition-all cursor-pointer ${warning && tx.status === "confirmed" ? "bg-red-50/30" : ""}`}
+                      onClick={() => { setSelectedTx(tx); setPriceInput(tx.price?.toString() || ""); setDeadlineInput(tx.endDate ? new Date(tx.endDate).toISOString().split('T')[0] : ""); }}
+                    >
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden border border-slate-200 shrink-0">
+                            {tx.imageUrl ? (
+                              <img src={tx.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                <Package size={20} />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-extrabold text-slate-800 group-hover:text-purple-600 transition-colors line-clamp-1">
+                              {tx.item?.title || "Item Upcycle"}
+                            </p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Cust: {tx.user?.name || "Pelanggan"}</p>
+                          </div>
                         </div>
-                      )}
-                      {tx.endDate && (
-                        <div className={`flex items-center gap-1.5 text-xs font-bold ${warning ? "text-red-600 animate-pulse" : "text-slate-700"}`}>
-                          <Calendar size={14} className={warning ? "text-red-500" : "text-blue-500"} /> 
-                          {new Date(tx.endDate).toLocaleDateString()} {warning && "(Tenggat Dekat!)"}
+                      </td>
+                      <td className="px-8 py-5">
+                        {tx.price ? (
+                          <p className="text-sm font-extrabold text-slate-700">Rp {tx.price.toLocaleString()}</p>
+                        ) : (
+                          <p className="text-[10px] font-bold text-slate-300 italic">Belum Ada</p>
+                        )}
+                      </td>
+                      <td className="px-8 py-5">
+                        {tx.endDate ? (
+                          <div className={`flex items-center gap-1.5 text-xs font-bold ${warning ? "text-red-600" : "text-slate-600"}`}>
+                            <Calendar size={14} className={warning ? "text-red-500" : "text-blue-500"} />
+                            {new Date(tx.endDate).toLocaleDateString()}
+                          </div>
+                        ) : (
+                          <p className="text-[10px] font-bold text-slate-300 italic">—</p>
+                        )}
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-extrabold uppercase tracking-wider ${cfg.bg} ${cfg.color} ${cfg.border}`}>
+                          <StatusIcon size={12} strokeWidth={3} /> {cfg.label}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                     <button 
-                      onClick={(e) => { e.stopPropagation(); handleContactWA(tx.user); }}
-                      className="p-3 bg-green-100 text-green-600 rounded-2xl hover:bg-green-500 hover:text-white transition-all shadow-sm"
-                     >
-                        <MessageCircle size={18} fill="currentColor" />
-                     </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleContactWA(tx.user); }}
+                            className="p-2.5 bg-green-100 text-green-600 rounded-xl hover:bg-green-500 hover:text-white transition-all shadow-sm"
+                          >
+                            <MessageCircle size={16} fill="currentColor" />
+                          </button>
+                          <button className="text-[10px] font-bold text-slate-400 hover:text-slate-800 uppercase tracking-widest bg-slate-100 px-4 py-2.5 rounded-xl transition-all group-hover:bg-slate-200">
+                            Atur →
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

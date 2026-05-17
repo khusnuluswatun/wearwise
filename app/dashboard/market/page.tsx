@@ -11,11 +11,15 @@ export default async function MarketPage() {
 
   const scans = await prisma.scan.findMany();
 
-  const marketItems = items.map((item) => {
-    const scan = scans.find((s) => s.id === item.scanId);
+  const marketItems = items.map((item: any) => {
+    const scan = scans.find((s: any) => s.id === item.scanId);
+    let imageUrl = scan?.imageUrl || "/placeholder.png";
+    if (imageUrl.startsWith("/uploads/")) {
+      imageUrl = `/api${imageUrl}`;
+    }
     return {
       ...item,
-      imageUrl: scan?.imageUrl || "/placeholder.png"
+      imageUrl: imageUrl
     };
   }).reverse();
   

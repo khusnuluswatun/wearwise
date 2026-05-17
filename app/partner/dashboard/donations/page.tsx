@@ -68,15 +68,27 @@ export default function PartnerDonationsPage() {
     }
   }, [statusFilter, donations]);
 
+  const [rejectReason, setRejectReason] = useState("");
+  const [isRejecting, setIsRejecting] = useState(false);
+
   const handleAction = async (txId: string, newStatus: "confirmed" | "rejected") => {
     if (!partnerInfo) return;
+    if (newStatus === "rejected" && !rejectReason) {
+      alert("Harap isi alasan penolakan");
+      return;
+    }
+
     setActionLoading(txId + newStatus);
     setError(null);
     try {
       const res = await fetch(`/api/donations/${txId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus, partnerId: partnerInfo.id }),
+        body: JSON.stringify({ 
+          status: newStatus, 
+          partnerId: partnerInfo.id,
+          notes: newStatus === "rejected" ? rejectReason : undefined
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal update status");
@@ -86,6 +98,8 @@ export default function PartnerDonationsPage() {
         prev.map((d: any) => (d.id === txId ? { ...d, status: newStatus } : d))
       );
       setSelectedTx(null); // Close modal on success
+      setRejectReason("");
+      setIsRejecting(false);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -151,57 +165,89 @@ export default function PartnerDonationsPage() {
         })}
       </div>
 
-      {/* Donation list */}
+      {/* Donation list - Refactored to Canvas Style */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-slate-200">
-          <HeartHandshake size={48} className="text-slate-200 mb-4" />
+        <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm">
+          <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+            <HeartHandshake size={40} className="text-slate-200" />
+          </div>
           <p className="text-lg font-bold text-slate-600">Tidak ada donasi</p>
-          <p className="text-slate-400 text-sm mt-1">
-            {statusFilter === "all" ? "Belum ada donasi yang masuk." : `Tidak ada donasi dengan status "${STATUS_CONFIG[statusFilter]?.label}".`}
+          <p className="text-slate-400 text-sm mt-1 max-w-xs text-center font-medium">
+            {statusFilter === "all" ? "Belum ada donasi yang masuk untuk saat ini." : `Tidak ada donasi dengan status "${STATUS_CONFIG[statusFilter]?.label}".`}
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {filtered.map((tx: any) => {
-            const cfg = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
-            const StatusIcon = cfg.icon;
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead className="bg-slate-50/50 border-b border-slate-100">
+                <tr className="text-left text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.2em]">
+                  <th className="px-8 py-5">Barang & ID</th>
+                  <th className="px-8 py-5">Donor</th>
+                  <th className="px-8 py-5">Metode</th>
+                  <th className="px-8 py-5">Status</th>
+                  <th className="px-8 py-5 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.map((tx) => {
+                  const cfg = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
+                  const StatusIcon = cfg.icon;
 
-            return (
-              <div 
-                key={tx.id} 
-                onClick={() => setSelectedTx(tx)}
-                className={`bg-white rounded-2xl border-2 shadow-sm overflow-hidden transition-all cursor-pointer hover:border-blue-300 hover:shadow-md ${tx.status === "pending" ? "border-amber-200" : "border-slate-200"}`}
-              >
-                <div className="flex items-center">
-
-                  {/* Image */}
-                  <div className="w-24 h-24 shrink-0 bg-slate-50 flex items-center justify-center p-2">
-                    {tx.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={tx.imageUrl}
-                        alt={tx.item?.title}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    ) : (
-                      <Package size={20} className="text-slate-300" />
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 p-4 flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <h3 className="font-bold text-slate-800 text-sm truncate">{tx.item?.title || "Barang Donasi"}</h3>
-                      <p className="text-xs text-slate-400 mt-0.5">dari {tx.user?.name || "Donor"}</p>
-                    </div>
-                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold shrink-0 ${cfg.bg} ${cfg.color} ${cfg.border}`}>
-                      <StatusIcon size={10} /> {cfg.label}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                  return (
+                    <tr 
+                      key={tx.id}
+                      className="group hover:bg-slate-50/50 transition-all cursor-pointer"
+                      onClick={() => { setSelectedTx(tx); setRejectReason(""); setIsRejecting(false); }}
+                    >
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden border border-slate-200 shrink-0">
+                            {tx.imageUrl ? (
+                              <img src={tx.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                <Package size={20} />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-extrabold text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-1">
+                              {tx.item?.title || "Barang Donasi"}
+                            </p>
+                            <p className="text-[10px] font-mono font-bold text-slate-300 mt-0.5 uppercase tracking-wider">#{tx.id.substring(0, 8)}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex flex-col">
+                          <p className="text-sm font-bold text-slate-700">{tx.user?.name || "Donor"}</p>
+                          <p className="text-[10px] text-slate-400 font-medium">{tx.user?.phone || "—"}</p>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className={`px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider ${
+                          tx.deliveryMethod === "pickup" ? "bg-purple-50 text-purple-600 border border-purple-100" : "bg-blue-50 text-blue-600 border border-blue-100"
+                        }`}>
+                          {tx.deliveryMethod === "pickup" ? "🚚 Pickup" : "🏢 Drop Off"}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-extrabold uppercase tracking-wider ${cfg.bg} ${cfg.color} ${cfg.border}`}>
+                          <StatusIcon size={12} strokeWidth={3} /> {cfg.label}
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <button className="text-[10px] font-bold text-slate-400 hover:text-slate-800 uppercase tracking-widest bg-slate-100 px-4 py-2 rounded-xl transition-all group-hover:bg-slate-200">
+                          Detail →
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -212,7 +258,7 @@ export default function PartnerDonationsPage() {
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <h2 className="font-bold text-slate-800">Detail Donasi</h2>
-              <button onClick={() => setSelectedTx(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400">
+              <button onClick={() => { setSelectedTx(null); setIsRejecting(false); }} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400">
                 <XCircle size={20} />
               </button>
             </div>
@@ -293,17 +339,45 @@ export default function PartnerDonationsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Rejection Form */}
+              {isRejecting && (
+                <div className="pt-4 border-t border-slate-100 space-y-3 animate-in slide-in-from-top-2 duration-300">
+                  <label className="text-xs font-bold text-red-500 uppercase tracking-widest">Alasan Penolakan (Wajib)</label>
+                  <textarea
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="Contoh: Barang tidak layak pakai atau kategori tidak sesuai..."
+                    className="w-full p-4 rounded-2xl bg-red-50/50 border border-red-100 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-200 min-h-[100px] transition-all"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setIsRejecting(false)}
+                      className="flex-1 py-2 text-xs font-bold text-slate-400 hover:text-slate-600"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={() => handleAction(selectedTx.id, "rejected")}
+                      disabled={!rejectReason || !!actionLoading}
+                      className="flex-[2] py-2 bg-red-500 text-white rounded-xl text-xs font-bold shadow-md disabled:opacity-50"
+                    >
+                      Konfirmasi Tolak
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Modal Footer (Actions) */}
-            {selectedTx.status === "pending" && (
+            {selectedTx.status === "pending" && !isRejecting && (
               <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
                 <button
-                  onClick={() => handleAction(selectedTx.id, "rejected")}
+                  onClick={() => setIsRejecting(true)}
                   disabled={!!actionLoading}
-                  className="flex-1 py-3 px-4 rounded-xl border-2 border-red-200 text-red-500 font-bold text-sm hover:bg-red-500 hover:text-white transition-all active:scale-95 disabled:opacity-50"
+                  className="flex-1 py-3 px-4 rounded-xl border-2 border-red-200 text-red-500 font-bold text-sm hover:bg-red-50 transition-all active:scale-95 disabled:opacity-50"
                 >
-                  {actionLoading === selectedTx.id + "rejected" ? <Loader2 size={18} className="animate-spin mx-auto" /> : "Tolak Donasi"}
+                  Tolak Donasi
                 </button>
                 <button
                   onClick={() => handleAction(selectedTx.id, "confirmed")}

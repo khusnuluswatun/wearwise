@@ -26,8 +26,6 @@ model User {
   rewards           Reward[]
   saleMade          SaleTransaction[] @relation("SellerTransactions")
   saleBought        SaleTransaction[] @relation("BuyerTransactions")
-
-  @@map("users")
 }
 
 model Scan {
@@ -40,8 +38,6 @@ model Scan {
   createdAt        DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
-
-  @@map("scans")
 }
 
 model Partner {
@@ -57,8 +53,6 @@ model Partner {
   longitude   Float?
 
   transactions Transaction[]
-
-  @@map("partners")
 }
 
 model Item {
@@ -72,8 +66,7 @@ model Item {
 
   user         User             @relation(fields: [userId], references: [id])
   saleTransactions SaleTransaction[]
-
-  @@map("items")
+  createdAt    DateTime         @default(now())
 }
 
 model SaleTransaction {
@@ -90,8 +83,6 @@ model SaleTransaction {
   item    Item @relation(fields: [itemId], references: [id])
   seller  User @relation("SellerTransactions", fields: [sellerId], references: [id])
   buyer   User @relation("BuyerTransactions", fields: [buyerId], references: [id])
-
-  @@map("sale_transactions")
 }
 
 model Transaction {
@@ -116,8 +107,6 @@ model Transaction {
 
   user    User     @relation(fields: [userId], references: [id])
   partner Partner? @relation(fields: [partnerId], references: [id])
-
-  @@map("transactions")
 }
 
 model Reward {
@@ -128,6 +117,4 @@ model Reward {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
-
-  @@map("rewards")
 }

@@ -51,7 +51,7 @@ export default function DashboardLayout({
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, badge: 0 },
       { name: "Scan", href: "/dashboard/scan", icon: ScanLine, badge: 0 },
       { name: "Market", href: "/dashboard/market", icon: ShoppingBag, badge: 0 },
-      { name: "My Market", href: "/dashboard/my-market", icon: Store, badge: 0 },
+      { name: "My Wardrobe", href: "/dashboard/my-market", icon: Scissors, badge: 0 },
       { name: "Notifikasi", href: "/dashboard/notifications", icon: Bell, badge: notifCount }
     ];
 
@@ -92,8 +92,8 @@ export default function DashboardLayout({
         <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const isDashboardItem = item.href === "/dashboard" || item.href === "/partner/dashboard";
-            const isActive = isDashboardItem 
-              ? pathname === item.href 
+            const isActive = isDashboardItem
+              ? pathname === item.href
               : pathname === item.href || pathname.startsWith(item.href + "/");
             const Icon = item.icon;
             return (

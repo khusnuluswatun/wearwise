@@ -36,8 +36,8 @@ export default function MarketClient({ items }: { items: any[] }) {
               <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-all group cursor-pointer h-full flex flex-col hover:-translate-y-1">
                 <div className="aspect-[4/5] bg-slate-100 relative overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={item.imageUrl} 
+                  <img
+                    src={item.imageUrl}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -51,7 +51,7 @@ export default function MarketClient({ items }: { items: any[] }) {
                   <p className="text-lg font-display font-extrabold text-green-600 mb-auto">
                     Rp {item.price.toLocaleString("id-ID")}
                   </p>
-                  
+
                   <div className="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 text-slate-500 overflow-hidden">
                       <div className="w-6 h-6 shrink-0 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">

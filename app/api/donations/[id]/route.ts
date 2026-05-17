@@ -5,7 +5,7 @@ import { prisma } from "../../../../lib/prisma";
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const { status, partnerId, price, endDate, role, userId: requestUserId } = await req.json();
+    const { status, partnerId, price, endDate, role, userId: requestUserId, notes } = await req.json();
 
     if (!["confirmed", "rejected", "completed", "success"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -29,6 +29,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     const data: any = { status };
+    if (notes) data.notes = notes;
 
     if (role !== "user") {
       data.sellerConfirmed = status === "confirmed" || status === "completed" || status === "success";
@@ -49,7 +50,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     // Update item status accordingly
     if (transaction.itemId) {
       let itemStatus = "donated";
-      if (status === "rejected") itemStatus = "rejected";
+      // If rejected, we set back to available so user can choose another partner
+      if (status === "rejected") itemStatus = "available"; 
       else if (status === "completed" || status === "success") {
         if (transaction.type === "upcycle") itemStatus = "upcycled";
         else if (transaction.type === "recycle") itemStatus = "recycled";
